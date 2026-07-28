@@ -71,16 +71,12 @@ def evaluate_model(model,X_test,y_test):
         recall = recall_score(y_test,y_pred,average="weighted",zero_division=0)
         f1 = f1_score(y_test,y_pred,average="weighted",zero_division=0)
         roc_auc = roc_auc_score(y_test,y_pred_probability,multi_class="ovr")
-        report = classification_report(y_test,y_pred,output_dict=True)
-        cm = confusion_matrix(y_test,y_pred).tolist()
         metrics = {
             "accuracy": accuracy,
             "precision": precision,
             "recall": recall,
             "f1_score": f1,
-            "roc_auc": roc_auc,
-            "classification_report": report,
-            "confusion_matrix": cm
+            "roc_auc": roc_auc
             }
         logger.info("Evaluation completed successfully.")
         return metrics
