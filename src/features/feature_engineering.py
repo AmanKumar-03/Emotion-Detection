@@ -124,8 +124,8 @@ def main():
         # Apply BOW
         train_df, test_df = apply_tfidf(train_data,test_data,max_features)
         # Save features
-        save_data(train_df,"./data/processed/train_bow.csv")
-        save_data(test_df,"./data/processed/test_bow.csv")
+        save_data(train_df,"./data/processed/train_tfidf.csv")
+        save_data(test_df,"./data/processed/test_tfidf.csv")
         logger.info("Feature Engineering Completed Successfully.")
     except Exception as e:
         logger.error("Pipeline failed: %s",e)
