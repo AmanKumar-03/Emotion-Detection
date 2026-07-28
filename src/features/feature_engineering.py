@@ -3,7 +3,7 @@ import logging
 import yaml
 import pandas as pd
 import numpy as np
-from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 logger = logging.getLogger("feature_engineering")
 logger.setLevel(logging.DEBUG)
@@ -58,7 +58,7 @@ def load_data(file_path: str) -> pd.DataFrame:
         logger.error("Error loading data: %s",e)
         raise
 
-def apply_bow(train_data: pd.DataFrame,test_data: pd.DataFrame,max_features: int):
+def apply_tfidf(train_data: pd.DataFrame,test_data: pd.DataFrame,max_features: int):
     """
     Convert text data into numerical vectors using CountVectorizer.
     Train:
@@ -69,7 +69,7 @@ def apply_bow(train_data: pd.DataFrame,test_data: pd.DataFrame,max_features: int
     the vocabulary learned from training data.
     """
     try:
-        vectorizer = CountVectorizer(max_features=max_features,ngram_range=(1,2),min_df=2)
+        vectorizer = TfidfVectorizer(max_features=max_features,ngram_range=(1,2),min_df=2)
 
         # Text column
         X_train = train_data["content"]
@@ -80,15 +80,15 @@ def apply_bow(train_data: pd.DataFrame,test_data: pd.DataFrame,max_features: int
         y_test = test_data["sentiment"]
 
         # Fit only on training data
-        X_train_bow = vectorizer.fit_transform(X_train)
+        X_train_tfidf = vectorizer.fit_transform(X_train)
 
         # Transform test data
-        X_test_bow = vectorizer.transform(X_test)
+        X_test_tfidf = vectorizer.transform(X_test)
         logger.info("Vocabulary Size: %s",len(vectorizer.vocabulary_))
 
         # Convert sparse matrix to dataframe
-        train_features = pd.DataFrame(X_train_bow.toarray(),columns=vectorizer.get_feature_names_out())
-        test_features = pd.DataFrame(X_test_bow.toarray(),columns=vectorizer.get_feature_names_out())
+        train_features = pd.DataFrame(X_train_tfidf.toarray(),columns=vectorizer.get_feature_names_out())
+        test_features = pd.DataFrame(X_test_tfidf.toarray(),columns=vectorizer.get_feature_names_out())
 
         # Add target column
         train_features["sentiment"] = y_train.values
@@ -122,7 +122,7 @@ def main():
         test_data = load_data("./data/interim/test_processed.csv")
 
         # Apply BOW
-        train_df, test_df = apply_bow(train_data,test_data,max_features)
+        train_df, test_df = apply_tfidf(train_data,test_data,max_features)
         # Save features
         save_data(train_df,"./data/processed/train_bow.csv")
         save_data(test_df,"./data/processed/test_bow.csv")

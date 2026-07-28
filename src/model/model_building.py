@@ -89,8 +89,8 @@ def main():
         model_params = params["model_building"]
 
         # Load processed features
-        train_data = load_data("./data/processed/train_bow.csv")
-        test_data = load_data("./data/processed/test_bow.csv")
+        train_data = load_data("./data/processed/train_tfidf.csv")
+        test_data = load_data("./data/processed/test_tfidf.csv")
 
         # Split features and target
         X_train = train_data.drop("sentiment",axis=1).values

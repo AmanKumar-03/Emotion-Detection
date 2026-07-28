@@ -10,9 +10,7 @@ from sklearn.metrics import (
     precision_score,
     recall_score,
     f1_score,
-    roc_auc_score,
-    classification_report,
-    confusion_matrix
+    roc_auc_score
 )
 
 logger = logging.getLogger("model_evaluation")
@@ -100,7 +98,7 @@ def main():
         model = load_model("./models/model.pkl")
 
         # Load test data
-        test_data = load_data("./data/processed/test_bow.csv")
+        test_data = load_data("./data/processed/test_tfidf.csv")
 
         # Split features and target
         X_test = test_data.drop("sentiment",axis=1).values
