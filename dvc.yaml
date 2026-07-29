@@ -30,6 +30,10 @@ stages:
       - params.yaml
     params:
       - feature_engineering.max_features
+      - feature_engineering.ngram_min
+      - feature_engineering.ngram_max
+      - feature_engineering.min_df
+      - feature_engineering.max_df
     outs:
       - data/processed/train_tfidf.csv
       - data/processed/test_tfidf.csv
@@ -42,9 +46,9 @@ stages:
       - data/processed/train_tfidf.csv
       - params.yaml
     params:
-      - model_building.n_estimators
-      - model_building.learning_rate
-      - model_building.max_depth
+      - model_building.model_type
+      - model_building.C
+      - model_building.max_iter
     outs:
       - models/model.pkl
 
@@ -53,7 +57,4 @@ stages:
     cmd: python src/model/model_evaluation.py
     deps:
       - src/model/model_evaluation.py
-      - models/model.pkl
-      - data/processed/test_tfidf.csv
-    metrics:
-      - reports/metrics.json
+      - models

@@ -1,15 +1,15 @@
 data_ingestion:
   test_size: 0.2
+  random_state: 42
+
+data_preprocessing:
+  remove_stopwords: true
+  lemmatization: true
+  remove_small_sentences: true
+  min_words: 3
 
 feature_engineering:
-<<<<<<< Updated upstream
-  max_features: 500
-
-model_building:
-  n_estimators: 100
-  learning_rate: 0.1
-  max_depth: 5
-=======
+  vectorizer: bow
   max_features: 5000
   ngram_min: 1
   ngram_max: 2
@@ -18,9 +18,6 @@ model_building:
 
 model_building:
   model_type: logistic_regression
-  n_estimators: 300
-  learning_rate: 0.05
-  max_depth: 5
   C: 1.0
   max_iter: 5000
->>>>>>> Stashed changes
+

@@ -5,17 +5,10 @@ import yaml
 import pandas as pd
 import numpy as np
 
-<<<<<<< Updated upstream
-from sklearn.ensemble import GradientBoostingClassifier
-=======
-
 from sklearn.linear_model import LogisticRegression
->>>>>>> Stashed changes
-
 
 logger = logging.getLogger("model_building")
 logger.setLevel(logging.DEBUG)
-
 
 if not logger.handlers:
 
@@ -58,22 +51,6 @@ def load_data(file_path: str):
         logger.error("Data loading error: %s",e)
         raise
 
-<<<<<<< Updated upstream
-def train_model(x_train: np.ndarray,y_train: np.ndarray,params: dict):
-    """
-    Train Gradient Boosting Classifier.
-    This model supports multi-class classification.
-    """
-    try:
-        model = GradientBoostingClassifier(
-            n_estimators=params["n_estimators"],
-            learning_rate=params["learning_rate"],
-            max_depth=params["max_depth"],
-            random_state=42
-            )
-        model.fit(x_train,y_train)
-        logger.info("Model training completed.")
-=======
 def train_model(X_train: np.ndarray, y_train: np.ndarray, params: dict):
     try:
         model_type = params["model_type"].lower()
@@ -91,7 +68,7 @@ def train_model(X_train: np.ndarray, y_train: np.ndarray, params: dict):
 
         model.fit(X_train, y_train)
         logger.info("Model training completed successfully.")
->>>>>>> Stashed changes
+
         return model
     except Exception as e:
         logger.error("Training error: %s",e)
