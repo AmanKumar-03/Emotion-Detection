@@ -5,12 +5,25 @@ stages:
     deps:
     - path: params.yaml
       hash: md5
+<<<<<<< Updated upstream
       md5: 0d23dd398a1fac8b4a7bf551754103e7
       size: 156
     - path: src/data/data_ingestion.py
       hash: md5
       md5: 51d2da29d94c26e39e182cc884cf787a
       size: 4590
+=======
+      md5: e4ee2ab96f1cffbd303934efc3732515
+      size: 422
+    - path: src/data/data_ingestion.py
+      hash: md5
+      md5: 48de2bd991a793c6d603a52a0f759379
+      size: 4450
+    params:
+      params.yaml:
+        data_ingestion.random_state: 42
+        data_ingestion.test_size: 0.2
+>>>>>>> Stashed changes
     outs:
     - path: data/raw/test.csv
       hash: md5
@@ -31,10 +44,28 @@ stages:
       hash: md5
       md5: 93efeee1952618a26788acb064a6423c
       size: 2436913
+<<<<<<< Updated upstream
     - path: src/data/data_preprocessing.py
       hash: md5
       md5: 698ebf8b1a173eb118bb3dc347a2617d
       size: 5606
+=======
+    - path: params.yaml
+      hash: md5
+      md5: e4ee2ab96f1cffbd303934efc3732515
+      size: 422
+    - path: src/data/data_preprocessing.py
+      hash: md5
+      md5: 9509e28f9fe9e935702f24bcb1eb3067
+      size: 5384
+    params:
+      params.yaml:
+        data_preprocessing:
+          remove_stopwords: true
+          lemmatization: true
+          remove_small_sentences: true
+          min_words: 3
+>>>>>>> Stashed changes
     outs:
     - path: data/interim/test_processed.csv
       hash: md5
@@ -57,6 +88,7 @@ stages:
       size: 1357162
     - path: params.yaml
       hash: md5
+<<<<<<< Updated upstream
       md5: 0d23dd398a1fac8b4a7bf551754103e7
       size: 156
     - path: src/features/feature_engineering.py
@@ -66,20 +98,45 @@ stages:
     params:
       params.yaml:
         feature_engineering.max_features: 500
+=======
+      md5: e4ee2ab96f1cffbd303934efc3732515
+      size: 422
+    - path: src/features/feature_engineering.py
+      hash: md5
+      md5: fc4b01e988aa5775d043e69c140cb19e
+      size: 4044
+    params:
+      params.yaml:
+        feature_engineering.max_df: 0.95
+        feature_engineering.max_features: 5000
+        feature_engineering.min_df: 2
+        feature_engineering.ngram_max: 2
+        feature_engineering.ngram_min: 1
+>>>>>>> Stashed changes
     outs:
     - path: data/processed/test_tfidf.csv
       hash: md5
+<<<<<<< Updated upstream
       md5: cc8712f3cc84ff058a2b054f32cec028
       size: 14300402
     - path: data/processed/train_tfidf.csv
       hash: md5
       md5: 06c95b10d8fd0d0470f03add1e32a355
       size: 56957162
+=======
+      md5: 1e94f18e7e609abf0c17367669d5cd44
+      size: 69199817
+    - path: data/processed/train_bow.csv
+      hash: md5
+      md5: d4c89b9154f84bfbd9f10ca27be1506d
+      size: 275432495
+>>>>>>> Stashed changes
   model_building:
     cmd: python src/model/model_building.py
     deps:
     - path: data/processed/train_tfidf.csv
       hash: md5
+<<<<<<< Updated upstream
       md5: 06c95b10d8fd0d0470f03add1e32a355
       size: 56957162
     - path: params.yaml
@@ -100,11 +157,36 @@ stages:
       hash: md5
       md5: 933a73070c2c0f0ded1fb00ad05f5ce0
       size: 3018980
+=======
+      md5: d4c89b9154f84bfbd9f10ca27be1506d
+      size: 275432495
+    - path: params.yaml
+      hash: md5
+      md5: e4ee2ab96f1cffbd303934efc3732515
+      size: 422
+    - path: src/model/model_building.py
+      hash: md5
+      md5: 75b54d1aa554e79f598cefb585116cf8
+      size: 3422
+    params:
+      params.yaml:
+        model_building.C: 1.0
+        model_building.learning_rate: 0.05
+        model_building.max_depth: 5
+        model_building.max_iter: 5000
+        model_building.n_estimators: 300
+    outs:
+    - path: models/model.pkl
+      hash: md5
+      md5: 0c7ff9c0d976c62e1a642a0becafb345
+      size: 440872
+>>>>>>> Stashed changes
   model_evaluation:
     cmd: python src/model/model_evaluation.py
     deps:
     - path: data/processed/test_tfidf.csv
       hash: md5
+<<<<<<< Updated upstream
       md5: cc8712f3cc84ff058a2b054f32cec028
       size: 14300402
     - path: models/model.pkl
@@ -120,3 +202,20 @@ stages:
       hash: md5
       md5: 81a4cb33e6482168b3a952eb7bb9f92c
       size: 187
+=======
+      md5: 1e94f18e7e609abf0c17367669d5cd44
+      size: 69199817
+    - path: models/model.pkl
+      hash: md5
+      md5: 0c7ff9c0d976c62e1a642a0becafb345
+      size: 440872
+    - path: src/model/model_evaluation.py
+      hash: md5
+      md5: 2cdfd9a2637b8490ac15d67168aeb178
+      size: 3181
+    outs:
+    - path: reports/metrics.json
+      hash: md5
+      md5: f541fbdae762447f6a5310e8dfb64d94
+      size: 189
+>>>>>>> Stashed changes
