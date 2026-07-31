@@ -65,8 +65,8 @@ stages:
       size: 843
     - path: src/features/feature_engineering.py
       hash: md5
-      md5: 7a9e8fe536ecc67080bde150ac4042a9
-      size: 5899
+      md5: 9c803fa6fa91ef550f597fd2ca62f85d
+      size: 5091
     params:
       params.yaml:
         feature_engineering.max_df: 0.95
@@ -78,7 +78,7 @@ stages:
     outs:
     - path: artifacts/vectorizer.pkl
       hash: md5
-      md5: bcf3d79c07b459008408067439e51caf
+      md5: dffae5709876d65a5a350209e49afac7
       size: 184594
     - path: data/processed/test_labels.npy
       hash: md5
