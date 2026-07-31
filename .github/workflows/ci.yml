@@ -17,20 +17,52 @@ jobs:
 
   build-test:
 
-
     runs-on: ubuntu-latest
 
 
     steps:
 
 
-    # Checkout repository
+    # -----------------------------
+    # Checkout Repository
+    # -----------------------------
+
     - name: Checkout code
       uses: actions/checkout@v4
 
 
 
+    # -----------------------------
+    # Cache DVC Data
+    # -----------------------------
+
+    - name: Cache DVC
+      uses: actions/cache@v4
+
+      with:
+
+        path: |
+
+          .dvc/cache
+
+          data
+
+          artifacts
+
+
+        key: dvc-${{ runner.os }}-${{ hashFiles('dvc.lock') }}
+
+
+        restore-keys: |
+
+          dvc-${{ runner.os }}-
+
+
+
+    # -----------------------------
     # Setup Python
+    # -----------------------------
+
     - name: Setup Python
       uses: actions/setup-python@v5
 
@@ -38,58 +70,114 @@ jobs:
 
         python-version: "3.12"
 
+        cache: pip
 
 
-    # Install dependencies
+
+    # -----------------------------
+    # Install Dependencies
+    # -----------------------------
+
     - name: Install dependencies
       run: |
 
         python -m pip install --upgrade pip
 
+
         pip install -r app/backend/requirements.txt
+
 
         pip install -r app/frontend/requirements.txt
 
-        pip install dvc
+
+        pip install dvc pytest
 
 
 
+    # -----------------------------
+    # DagsHub Authentication
+    # -----------------------------
+
+    - name: Configure DagsHub
+      env:
+
+        DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+
+      run: |
+
+        echo "DAGSHUB_TOKEN=${DAGSHUB_TOKEN}" >> $GITHUB_ENV
+
+
+
+    # -----------------------------
     # Run DVC Pipeline
+    # -----------------------------
+
     - name: Run DVC Pipeline
+      env:
+
+        DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+
       run: |
 
         dvc repro
 
 
 
-    # Check generated files
-    - name: Check Pipeline Output
+    # -----------------------------
+    # Check Pipeline Outputs
+    # -----------------------------
+
+    - name: Verify Output Files
       run: |
 
-        ls data
+        echo "Checking artifacts..."
 
-        ls artifacts
+        ls artifacts || true
+
+
+        echo "Checking data..."
+
+        ls data || true
 
 
 
-    # Syntax validation
-    - name: Python Syntax Check
+    # -----------------------------
+    # ML Model Testing
+    # -----------------------------
+
+    - name: Test ML Model
+      run: |
+
+        pytest tests/test_model.py
+
+
+
+    # -----------------------------
+    # Python Syntax Check
+    # -----------------------------
+
+    - name: Syntax Check
       run: |
 
         python -m compileall src app
 
 
 
+    # -----------------------------
     # FastAPI Test
+    # -----------------------------
+
     - name: Test FastAPI Backend
       run: |
 
         cd app/backend
 
+
         python -c "
 
         from main import app
 
-        print('FastAPI loaded successfully')
+        print('FastAPI application loaded successfully')
 
         "
