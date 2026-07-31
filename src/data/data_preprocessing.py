@@ -7,6 +7,10 @@ import pandas as pd
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 
+os.makedirs(
+    "logs",
+    exist_ok=True
+)
 logger = logging.getLogger("data_preprocessing")
 logger.setLevel(logging.DEBUG)
 
@@ -25,23 +29,47 @@ if not logger.handlers:
     logger.addHandler(console_handler)
     logger.addHandler(file_handler)
 
-try:
-    nltk.data.find("corpora/stopwords")
-except LookupError:
-    nltk.download("stopwords")
+# =====================================================
+# NLTK Setup
+# =====================================================
 
-try:
-    nltk.data.find("corpora/wordnet")
-except LookupError:
-    nltk.download("wordnet")
+def download_nltk():
 
-try:
-    nltk.data.find("tokenizers/punkt")
-except LookupError:
-    nltk.download("punkt")
+    packages = [
+        "stopwords",
+        "wordnet",
+        "punkt"
+    ]
+
+
+    for package in packages:
+
+        try:
+
+            nltk.data.find(
+                f"corpora/{package}"
+            )
+
+
+        except LookupError:
+
+            nltk.download(
+                package,
+                quiet=True
+            )
+
+
+
+download_nltk()
+
+
 
 lemmatizer = WordNetLemmatizer()
-stop_words = set(stopwords.words("english"))
+
+
+stop_words = set(
+    stopwords.words("english")
+)
 
 def lower_case(text):
     """Convert text to lowercase."""
@@ -101,44 +129,70 @@ def remove_small_sentences(df):
     return df
 
 def normalize_text(df):
-    """
-    Perform complete preprocessing on tweet text.
-    NOTE:
-    Sentiment labels are NOT modified.
-    Only the 'content' column is cleaned.
-    """
+
     try:
+
         df = df.copy()
 
-        # Handle missing values
-        df["content"] = (df["content"].fillna("").astype(str))
-        logger.info("Starting text preprocessing...")
-        df["content"] = df["content"].apply(lower_case)
-        logger.debug("Lowercase completed.")
-        df["content"] = df["content"].apply(remove_urls)
-        logger.debug("URLs removed.")
-        df["content"] = df["content"].apply(remove_html)
-        logger.debug("HTML tags removed.")
-        df["content"] = df["content"].apply(remove_emails)
-        logger.debug("Emails removed.")
-        df["content"] = df["content"].apply(remove_mentions)
-        logger.debug("Twitter mentions removed.")
-        df["content"] = df["content"].apply(remove_hashtags)
-        logger.debug("Hashtags cleaned.")
-        df["content"] = df["content"].apply(remove_numbers)
-        logger.debug("Numbers removed.")
-        df["content"] = df["content"].apply(remove_punctuation)
-        logger.debug("Punctuation removed.")
-        df["content"] = df["content"].apply(remove_extra_spaces)
-        df["content"] = df["content"].apply(remove_stop_words)
-        logger.debug("Stopwords removed.")
-        df["content"] = df["content"].apply(lemmatization)
-        logger.debug("Lemmatization completed.")
-        df = remove_small_sentences(df)
-        logger.info("Text preprocessing completed successfully.")
+
+        df["content"] = (
+            df["content"]
+            .fillna("")
+            .astype(str)
+        )
+
+
+        steps = [
+
+            lower_case,
+
+            remove_urls,
+
+            remove_html,
+
+            remove_emails,
+
+            remove_mentions,
+
+            remove_hashtags,
+
+            remove_numbers,
+
+            remove_punctuation,
+
+            remove_extra_spaces,
+
+            remove_stop_words,
+
+            lemmatization
+
+        ]
+
+
+        for step in steps:
+
+            df["content"] = (
+                df["content"]
+                .apply(step)
+            )
+
+
+        df = remove_small_sentences(
+            df
+        )
+
+
         return df
+
+
+
     except Exception as e:
-        logger.error("Error during preprocessing: %s",e)
+
+        logger.exception(
+            "Preprocessing failed: %s",
+            e
+        )
+
         raise
 
 def save_processed_data(train_df, test_df, output_path):

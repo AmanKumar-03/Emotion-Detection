@@ -15,13 +15,20 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 
 # DagsHub + MLflow Configuration
-dagshub.init(repo_owner="AmanKumar-03",repo_name="Emotion-Detection",mlflow=True)
+import os
 
-mlflow.set_tracking_uri("https://dagshub.com/AmanKumar-03/Emotion-Detection.mlflow")
+if os.getenv("CI") != "true":
+    dagshub.init(repo_owner="AmanKumar-03",repo_name="Emotion-Detection",mlflow=True)
 
-mlflow.set_experiment("Emotion_Detection")
+    mlflow.set_tracking_uri("https://dagshub.com/AmanKumar-03/Emotion-Detection.mlflow")
+
+    mlflow.set_experiment("Emotion_Detection")
 
 # Logger Configuration
+os.makedirs(
+    "logs",
+    exist_ok=True
+)
 logger = logging.getLogger("feature_engineering")
 logger.setLevel(logging.DEBUG)
 
@@ -113,57 +120,179 @@ def save_vectorizer(vectorizer):
         logger.error("Vectorizer saving failed: %s",e)
         raise
 
-# Main Pipeline
+# =====================================================
+# Pipeline
+# =====================================================
+
+def run_pipeline():
+
+
+    params = load_params(
+        "params.yaml"
+    )
+
+
+    feature_params = params[
+        "feature_engineering"
+    ]
+
+
+
+    if os.getenv("CI") != "true":
+
+        mlflow.log_params(
+
+            {
+
+            "vectorizer":
+            feature_params["vectorizer"],
+
+            "max_features":
+            feature_params["max_features"],
+
+            "ngram_min":
+            feature_params["ngram_min"],
+
+            "ngram_max":
+            feature_params["ngram_max"],
+
+            "min_df":
+            feature_params["min_df"],
+
+            "max_df":
+            feature_params["max_df"]
+
+            }
+
+        )
+
+
+
+    train_data = load_data(
+        "./data/interim/train_processed.csv"
+    )
+
+
+    test_data = load_data(
+        "./data/interim/test_processed.csv"
+    )
+
+
+
+    X_train,X_test,y_train,y_test,vectorizer = apply_tfidf(
+
+        train_data,
+
+        test_data,
+
+        feature_params
+
+    )
+
+
+
+    os.makedirs(
+        "./data/processed",
+        exist_ok=True
+    )
+
+
+
+    save_npz(
+        "./data/processed/train_tfidf.npz",
+        X_train
+    )
+
+
+    save_npz(
+        "./data/processed/test_tfidf.npz",
+        X_test
+    )
+
+
+
+    np.save(
+
+        "./data/processed/train_labels.npy",
+
+        np.array(y_train)
+
+    )
+
+
+    np.save(
+
+        "./data/processed/test_labels.npy",
+
+        np.array(y_test)
+
+    )
+
+
+
+    vectorizer_path = save_vectorizer(
+        vectorizer
+    )
+
+
+
+    if os.getenv("CI") != "true":
+
+
+        mlflow.log_metric(
+
+            "vocabulary_size",
+
+            len(vectorizer.vocabulary_)
+
+        )
+
+
+        mlflow.log_artifact(
+            vectorizer_path
+        )
+
+
+
+    logger.info(
+        "Feature Engineering completed"
+    )
+
+
+
+# =====================================================
+# Main
+# =====================================================
+
 def main():
-    with mlflow.start_run(run_name="tfidf_feature_engineering"):
 
-        try:
-            params = load_params("params.yaml")
-            feature_params = params["feature_engineering"]
+    try:
 
-            # Log parameters
-            mlflow.log_params({
-                    "vectorizer":feature_params["vectorizer"],
-                    "max_features":feature_params["max_features"],
-                    "ngram_min":feature_params["ngram_min"],
-                    "ngram_max":feature_params["ngram_max"],
-                    "min_df":feature_params["min_df"],
-                    "max_df":feature_params["max_df"]
+        if os.getenv("CI") != "true":
 
-                })
-            train_data = load_data("./data/interim/train_processed.csv")
-            test_data = load_data("./data/interim/test_processed.csv")
-            if feature_params["vectorizer"] != "tfidf":
-                raise ValueError("Only TF-IDF vectorizer supported")
+            with mlflow.start_run(
+                run_name="tfidf_feature_engineering"
+            ):
 
-            (X_train,X_test,y_train,y_test,vectorizer) = apply_tfidf(
-                train_data,test_data,feature_params)
+                run_pipeline()
 
-            # Save processed directory
-            os.makedirs("./data/processed",exist_ok=True)
 
-            # Save features
-            save_npz("./data/processed/train_tfidf.npz",X_train)
-            save_npz("./data/processed/test_tfidf.npz",X_test)
+        else:
 
-            # Save labels
-            np.save("./data/processed/train_labels.npy",np.array(y_train))
-            np.save("./data/processed/test_labels.npy",np.array(y_test))
+            run_pipeline()
 
-            # Save vectorizer for FastAPI
-            vectorizer_path = save_vectorizer(vectorizer)
 
-            # MLflow logging
-            mlflow.log_params({
-                    "vocabulary_size":len(vectorizer.vocabulary_),
-                    "train_features":X_train.shape[1],
-                    "test_features":X_test.shape[1]
-                })
-            mlflow.log_artifact(vectorizer_path)
-            logger.info("Feature Engineering completed successfully")
-        except Exception as e:
-            logger.exception("Pipeline failed: %s",e)
-            raise
+
+    except Exception as e:
+
+        logger.exception(
+            "Pipeline failed %s",
+            e
+        )
+
+        raise
+
+
 
 if __name__ == "__main__":
 

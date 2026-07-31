@@ -11,11 +11,15 @@ from sklearn.model_selection import train_test_split
 
 
 # DagsHub + MLflow Setup
-dagshub.init(repo_owner="AmanKumar-03",repo_name="Emotion-Detection",mlflow=True)
+import os
 
-mlflow.set_tracking_uri("https://dagshub.com/AmanKumar-03/Emotion-Detection.mlflow")
+if os.getenv("CI") != "true":
 
-mlflow.set_experiment("Emotion_Detection")
+    dagshub.init(repo_owner="AmanKumar-03",repo_name="Emotion-Detection",mlflow=True)
+
+    mlflow.set_tracking_uri("https://dagshub.com/AmanKumar-03/Emotion-Detection.mlflow")
+
+    mlflow.set_experiment("Emotion_Detection")
 
 
 # Logger Configuration
@@ -129,47 +133,160 @@ def save_data(train_df,test_df):
         logger.error("Saving failed: %s",e)
         raise
 
-# Main Pipeline
-def main():
-    with mlflow.start_run(run_name="data_ingestion"):
+# =====================================================
+# Pipeline
+# =====================================================
+
+def run_pipeline():
+
+    params = load_params(
+        "params.yaml"
+    )
 
 
-        try:
-            params = load_params("params.yaml")
-            data_params = params["data_ingestion"]
-            test_size = data_params["test_size"]
-            random_state = data_params["random_state"]
-            mlflow.log_params({
+    data_params = params[
+        "data_ingestion"
+    ]
+
+
+    test_size = data_params[
+        "test_size"
+    ]
+
+
+    random_state = data_params[
+        "random_state"
+    ]
+
+
+
+    if os.getenv("CI") != "true":
+
+        mlflow.log_params(
+            {
                 "test_size": test_size,
                 "random_state": random_state
-            })
+            }
+        )
 
-            # Dataset URL
-            data_url = (
-                "https://raw.githubusercontent.com/"
-                "campusx-official/""jupyter-masterclass/main/""tweet_emotions.csv")
-            df = load_data(data_url)
-            mlflow.log_param("dataset","tweet_emotions.csv")
-            mlflow.log_metric("original_rows",len(df))
 
-            # Cleaning
-            processed_df = preprocess_data(df)
-            mlflow.log_metric("processed_rows",len(processed_df))
 
-            # Verify labels
-            logger.info("Final labels: %s",processed_df["sentiment"].unique())
+    data_url = (
+        "https://raw.githubusercontent.com/"
+        "campusx-official/"
+        "jupyter-masterclass/main/"
+        "tweet_emotions.csv"
+    )
 
-            # Split
-            train_df, test_df = split_data(processed_df,test_size,random_state)
-            mlflow.log_metric("train_rows",len(train_df))
-            mlflow.log_metric("test_rows",len(test_df))
 
-            # Save
-            save_data(train_df,test_df)
-            logger.info("Data ingestion completed successfully")
-        except Exception as e:
-            logger.exception("Pipeline failed: %s",e)
-            raise
+
+    df = load_data(
+        data_url
+    )
+
+
+    if os.getenv("CI") != "true":
+
+        mlflow.log_param(
+            "dataset",
+            "tweet_emotions.csv"
+        )
+
+
+        mlflow.log_metric(
+            "original_rows",
+            len(df)
+        )
+
+
+
+    processed_df = preprocess_data(
+        df
+    )
+
+
+
+    if os.getenv("CI") != "true":
+
+        mlflow.log_metric(
+            "processed_rows",
+            len(processed_df)
+        )
+
+
+
+    train_df, test_df = split_data(
+
+        processed_df,
+
+        test_size,
+
+        random_state
+
+    )
+
+
+
+    if os.getenv("CI") != "true":
+
+        mlflow.log_metric(
+            "train_rows",
+            len(train_df)
+        )
+
+
+        mlflow.log_metric(
+            "test_rows",
+            len(test_df)
+        )
+
+
+
+    save_data(
+        train_df,
+        test_df
+    )
+
+
+    logger.info(
+        "Data ingestion completed successfully"
+    )
+
+
+
+# =====================================================
+# Main
+# =====================================================
+
+def main():
+
+    try:
+
+        if os.getenv("CI") != "true":
+
+            with mlflow.start_run(
+                run_name="data_ingestion"
+            ):
+
+                run_pipeline()
+
+
+        else:
+
+            run_pipeline()
+
+
+
+    except Exception as e:
+
+        logger.exception(
+            "Pipeline failed: %s",
+            e
+        )
+
+        raise
+
+
 
 if __name__ == "__main__":
 

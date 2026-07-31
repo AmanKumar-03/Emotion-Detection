@@ -5,12 +5,12 @@ stages:
     deps:
     - path: params.yaml
       hash: md5
-      md5: 897241478157c8215418cabbe5cf70d1
-      size: 842
+      md5: 4ed6c6872d29377f4a94b0c77fb10cd7
+      size: 843
     - path: src/data/data_ingestion.py
       hash: md5
-      md5: 5bae74aa965f26859805cf64b4e6c4b5
-      size: 5190
+      md5: f25b3e66fc238ababdd84f86811f8a71
+      size: 6027
     outs:
     - path: data/raw/test.csv
       hash: md5
@@ -33,12 +33,12 @@ stages:
       size: 2658948
     - path: params.yaml
       hash: md5
-      md5: 897241478157c8215418cabbe5cf70d1
-      size: 842
+      md5: 4ed6c6872d29377f4a94b0c77fb10cd7
+      size: 843
     - path: src/data/data_preprocessing.py
       hash: md5
-      md5: 698ebf8b1a173eb118bb3dc347a2617d
-      size: 5606
+      md5: afcf0d422fb9522661bf11ceb9edcad3
+      size: 5121
     outs:
     - path: data/interim/test_processed.csv
       hash: md5

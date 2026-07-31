@@ -22,11 +22,14 @@ from sklearn.metrics import (
 
 
 # DagsHub + MLflow Setup
-dagshub.init(repo_owner="AmanKumar-03",repo_name="Emotion-Detection",mlflow=True)
+import os
 
-mlflow.set_tracking_uri("https://dagshub.com/AmanKumar-03/Emotion-Detection.mlflow")
+if os.getenv("CI") != "true":
+    dagshub.init(repo_owner="AmanKumar-03",repo_name="Emotion-Detection",mlflow=True)
 
-mlflow.set_experiment("Emotion_Detection")
+    mlflow.set_tracking_uri("https://dagshub.com/AmanKumar-03/Emotion-Detection.mlflow")
+
+    mlflow.set_experiment("Emotion_Detection")
 
 # Logger
 logger = logging.getLogger("model_evaluation")
@@ -105,53 +108,210 @@ def save_metrics(metrics):
         json.dump(metrics,file,indent=4)
     return path
 
+# =====================================================
+# Evaluation Pipeline
+# =====================================================
+
+def run_pipeline():
+
+
+    X_test = load_features(
+        "./data/processed/test_tfidf.npz"
+    )
+
+
+    y_test = load_labels(
+        "./data/interim/test_processed.csv"
+    )
+
+
+    model = load_model(
+        "./artifacts/model.pkl"
+    )
+
+
+
+    predictions = model.predict(
+        X_test
+    )
+
+
+
+    metrics = {
+
+
+        "accuracy":
+
+        float(
+            accuracy_score(
+                y_test,
+                predictions
+            )
+        ),
+
+
+        "precision":
+
+        float(
+            precision_score(
+                y_test,
+                predictions,
+                average="weighted",
+                zero_division=0
+            )
+        ),
+
+
+        "recall":
+
+        float(
+            recall_score(
+                y_test,
+                predictions,
+                average="weighted",
+                zero_division=0
+            )
+        ),
+
+
+        "f1_score":
+
+        float(
+            f1_score(
+                y_test,
+                predictions,
+                average="weighted",
+                zero_division=0
+            )
+        )
+
+    }
+
+
+
+    logger.info(
+        metrics
+    )
+
+
+
+    report = classification_report(
+        y_test,
+        predictions,
+        zero_division=0
+    )
+
+
+    os.makedirs(
+        "reports",
+        exist_ok=True
+    )
+
+
+    report_path = (
+        "reports/classification_report.txt"
+    )
+
+
+    with open(
+        report_path,
+        "w"
+    ) as file:
+
+        file.write(
+            report
+        )
+
+
+
+    cm = confusion_matrix(
+        y_test,
+        predictions
+    )
+
+
+    cm_path = save_confusion_matrix(
+        cm
+    )
+
+
+    metrics_path = save_metrics(
+        metrics
+    )
+
+
+
+    # MLflow only local
+
+    if os.getenv("CI") != "true":
+
+
+        mlflow.log_metrics(
+            metrics
+        )
+
+
+        mlflow.log_artifact(
+            cm_path
+        )
+
+
+        mlflow.log_artifact(
+            metrics_path
+        )
+
+
+        mlflow.log_artifact(
+            report_path
+        )
+
+
+
+    logger.info(
+        "Model evaluation completed"
+    )
+
+
+
+# =====================================================
 # Main
+# =====================================================
+
 def main():
-    with mlflow.start_run(run_name="model_evaluation"):
 
-        try:
-            # Load test data
-            X_test = load_features("./data/processed/test_tfidf.npz")
-            y_test = load_labels("./data/interim/test_processed.csv")
+    try:
 
-            # IMPORTANT:
-            # Model from artifacts folder
-            model = load_model("./artifacts/model.pkl")
 
-            # Prediction
-            predictions = model.predict(X_test)
+        if os.getenv("CI") != "true":
 
-            # Metrics
-            metrics = {
-                "accuracy":float(accuracy_score(y_test,predictions)),
-                "precision":float(precision_score(y_test,predictions,average="weighted",zero_division=0)),
-                "recall":float(recall_score(y_test,predictions,average="weighted",zero_division=0)),
-                "f1_score":float(f1_score(y_test,predictions,average="weighted",zero_division=0))
-            }
-            logger.info(metrics)
 
-            # Classification report
-            report = classification_report(y_test,predictions,zero_division=0)
-            print(report)
-            os.makedirs("./reports",exist_ok=True)
-            report_path = ("./reports/classification_report.txt")
-            with open(report_path,"w") as file:
-                file.write(report)
+            with mlflow.start_run(
+                run_name="model_evaluation"
+            ):
 
-            # Confusion Matrix
-            cm = confusion_matrix(y_test,predictions)
-            cm_path = save_confusion_matrix(cm)
-            metrics_path = save_metrics(metrics)
+                run_pipeline()
 
-            # MLflow logging
-            mlflow.log_metrics(metrics)
-            mlflow.log_artifact(cm_path)
-            mlflow.log_artifact(metrics_path)
-            mlflow.log_artifact(report_path)
-            logger.info("Model evaluation completed successfully")
-        except Exception as e:
-            logger.exception("Evaluation pipeline failed: %s",e)
-            raise
+
+
+        else:
+
+            run_pipeline()
+
+
+
+    except Exception as e:
+
+
+        logger.exception(
+            "Evaluation failed: %s",
+            e
+        )
+
+
+        raise
+
+
 
 if __name__ == "__main__":
+
     main()

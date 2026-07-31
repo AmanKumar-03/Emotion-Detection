@@ -23,10 +23,13 @@ from sklearn.metrics import (
 )
 
 # DagsHub + MLflow Configuration
-dagshub.init(repo_owner="AmanKumar-03",repo_name="Emotion-Detection",mlflow=True)
+import os
 
-mlflow.set_tracking_uri("https://dagshub.com/AmanKumar-03/Emotion-Detection.mlflow")
-mlflow.set_experiment("Emotion_Detection")
+if os.getenv("CI") != "true":
+    dagshub.init(repo_owner="AmanKumar-03",repo_name="Emotion-Detection",mlflow=True)
+
+    mlflow.set_tracking_uri("https://dagshub.com/AmanKumar-03/Emotion-Detection.mlflow")
+    mlflow.set_experiment("Emotion_Detection")
 
 # Logger Configuration
 logger = logging.getLogger("model_building")
@@ -115,73 +118,252 @@ def save_model(model):
         logger.error("Model saving failed: %s",e)
         raise
 
-# Main Pipeline
-def main():
-    with mlflow.start_run(run_name="logistic_regression_best_model"):
+# =====================================================
+# Pipeline
+# =====================================================
 
-        try:
-            # Load Params
-            params = load_params("params.yaml")
-            model_params = params["model_building"]
+def run_pipeline():
 
-            # Load Features
-            X_train = load_npz("./data/processed/train_tfidf.npz")
-            X_test = load_npz("./data/processed/test_tfidf.npz")
-            logger.info("Train shape: %s",X_train.shape)
-            logger.info("Test shape: %s",X_test.shape)
 
-            # Load Labels
-            y_train = load_labels("./data/interim/train_processed.csv")
-            y_test = load_labels("./data/interim/test_processed.csv")
+    params = load_params(
+        "params.yaml"
+    )
 
-            if X_train.shape[0] != len(y_train):
-                raise ValueError("Training data mismatch")
 
-            if X_test.shape[0] != len(y_test):
-                raise ValueError("Testing data mismatch")
+    model_params = params[
+        "model_building"
+    ]
 
-            # Train
-            model, training_time = train_model(
-                X_train,
+
+
+    X_train = load_npz(
+        "./data/processed/train_tfidf.npz"
+    )
+
+
+    X_test = load_npz(
+        "./data/processed/test_tfidf.npz"
+    )
+
+
+    y_train = load_labels(
+        "./data/interim/train_processed.csv"
+    )
+
+
+    y_test = load_labels(
+        "./data/interim/test_processed.csv"
+    )
+
+
+
+    if X_train.shape[0] != len(y_train):
+
+        raise ValueError(
+            "Training data mismatch"
+        )
+
+
+    if X_test.shape[0] != len(y_test):
+
+        raise ValueError(
+            "Testing data mismatch"
+        )
+
+
+
+    model, training_time = train_model(
+
+        X_train,
+
+        y_train,
+
+        model_params
+
+    )
+
+
+
+    train_pred = model.predict(
+        X_train
+    )
+
+
+    test_pred = model.predict(
+        X_test
+    )
+
+
+
+    metrics = {
+
+
+        "train_accuracy":
+
+        float(
+            accuracy_score(
                 y_train,
-                model_params
+                train_pred
             )
+        ),
 
-            # Prediction
-            train_pred = model.predict(X_train)
-            test_pred = model.predict(X_test)
 
-            # Metrics
-            metrics = {
-                "train_accuracy":float(accuracy_score(y_train,train_pred)),
-                "test_accuracy":float(accuracy_score(y_test,test_pred)),
-                "precision":float(precision_score(y_test,test_pred,average="weighted",zero_division=0)),
-                "recall":float(recall_score(y_test,test_pred,average="weighted",zero_division=0)),
-                "f1_score":float(f1_score(y_test,test_pred,average="weighted",zero_division=0))
-            }
-            logger.info(metrics)
+        "test_accuracy":
 
-            # MLflow Logging
-            mlflow.log_params(model_params)
-            mlflow.log_metrics(metrics)
-            mlflow.log_metric("training_time",training_time)
-            mlflow.set_tag("model_type","Logistic Regression")
-            mlflow.set_tag("framework","scikit-learn")
-            mlflow.set_tag("project","Emotion Detection")
+        float(
+            accuracy_score(
+                y_test,
+                test_pred
+            )
+        ),
 
-            # Save Model
-            model_path = save_model(model)
-            mlflow.log_artifact(model_path)
 
-            # MLflow Model Registry
-            mlflow.sklearn.log_model(
-                sk_model=model,
-                artifact_path="model",
-                registered_model_name="Emotion_Detection_Model")
-            logger.info("Model registered successfully")
-        except Exception as e:
-            logger.exception("Model building failed: %s",e)
-            raise
+        "precision":
+
+        float(
+            precision_score(
+                y_test,
+                test_pred,
+                average="weighted",
+                zero_division=0
+            )
+        ),
+
+
+        "recall":
+
+        float(
+            recall_score(
+                y_test,
+                test_pred,
+                average="weighted",
+                zero_division=0
+            )
+        ),
+
+
+        "f1_score":
+
+        float(
+            f1_score(
+                y_test,
+                test_pred,
+                average="weighted",
+                zero_division=0
+            )
+        )
+
+    }
+
+
+
+    logger.info(
+        metrics
+    )
+
+
+
+    # Only MLflow outside CI
+
+    if os.getenv("CI") != "true":
+
+
+        mlflow.log_params(
+            model_params
+        )
+
+
+        mlflow.log_metrics(
+            metrics
+        )
+
+
+        mlflow.log_metric(
+            "training_time",
+            training_time
+        )
+
+
+        mlflow.set_tag(
+            "model_type",
+            "Logistic Regression"
+        )
+
+
+
+    model_path = save_model(
+        model
+    )
+
+
+
+    if os.getenv("CI") != "true":
+
+
+        mlflow.log_artifact(
+            model_path
+        )
+
+
+        mlflow.sklearn.log_model(
+
+            sk_model=model,
+
+            artifact_path="model",
+
+            registered_model_name=
+            "Emotion_Detection_Model1"
+
+        )
+
+
+
+    logger.info(
+        "Model building completed successfully"
+    )
+
+
+
+# =====================================================
+# Main
+# =====================================================
+
+def main():
+
+    try:
+
+
+        if os.getenv("CI") != "true":
+
+
+            with mlflow.start_run(
+                run_name=
+                "logistic_regression_best_model"
+            ):
+
+                run_pipeline()
+
+
+
+        else:
+
+            run_pipeline()
+
+
+
+    except Exception as e:
+
+
+        logger.exception(
+            "Model building failed %s",
+            e
+        )
+
+
+        raise
+
+
 
 if __name__ == "__main__":
+
     main()

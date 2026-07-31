@@ -42,7 +42,7 @@ model_evaluation:
 
 
 model_registry:
-  model_name: Emotion_Detection_Model
+  model_name: Emotion_Detection_Model1
   minimum_accuracy: 0.25
   minimum_f1_score: 0.25
   alias: champion
