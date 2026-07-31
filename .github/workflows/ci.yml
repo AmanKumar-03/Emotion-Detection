@@ -1,6 +1,8 @@
 name: Emotion Detection CI
 
+
 on:
+
   push:
     branches:
       - master
@@ -10,25 +12,32 @@ on:
       - master
 
 
+
 jobs:
 
   build-test:
+
 
     runs-on: ubuntu-latest
 
 
     steps:
 
-    # Checkout code
-    - name: Checkout repository
+
+    # Checkout repository
+    - name: Checkout code
       uses: actions/checkout@v4
+
 
 
     # Setup Python
     - name: Setup Python
       uses: actions/setup-python@v5
+
       with:
+
         python-version: "3.12"
+
 
 
     # Install dependencies
@@ -41,21 +50,46 @@ jobs:
 
         pip install -r app/frontend/requirements.txt
 
+        pip install dvc
 
-    # Check Python files
-    - name: Syntax Check
+
+
+    # Run DVC Pipeline
+    - name: Run DVC Pipeline
       run: |
 
-        python -m compileall app
+        dvc repro
 
 
-    # Test backend imports
+
+    # Check generated files
+    - name: Check Pipeline Output
+      run: |
+
+        ls data
+
+        ls artifacts
+
+
+
+    # Syntax validation
+    - name: Python Syntax Check
+      run: |
+
+        python -m compileall src app
+
+
+
+    # FastAPI Test
     - name: Test FastAPI Backend
       run: |
 
         cd app/backend
 
         python -c "
+
         from main import app
-        print('FastAPI application loaded successfully')
+
+        print('FastAPI loaded successfully')
+
         "
