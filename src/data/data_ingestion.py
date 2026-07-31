@@ -1,24 +1,36 @@
 import os
 import logging
 import yaml
+
 import pandas as pd
+
+import mlflow
+import dagshub
+
 from sklearn.model_selection import train_test_split
 
+
+# DagsHub + MLflow Setup
+dagshub.init(repo_owner="AmanKumar-03",repo_name="Emotion-Detection",mlflow=True)
+
+mlflow.set_tracking_uri("https://dagshub.com/AmanKumar-03/Emotion-Detection.mlflow")
+
+mlflow.set_experiment("Emotion_Detection")
+
+
+# Logger Configuration
 logger = logging.getLogger("data_ingestion")
 logger.setLevel(logging.DEBUG)
 
-# Prevent duplicate handlers if the script is executed multiple times
+
 if not logger.handlers:
 
-    # Display logs in terminal
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.DEBUG)
+    console_handler.setLevel(logging.INFO)
 
-    # Save only ERROR logs in a file
-    file_handler = logging.FileHandler("error.log")
+    file_handler = logging.FileHandler("data_ingestion_error.log")
     file_handler.setLevel(logging.ERROR)
 
-    # Log message format
     formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
     console_handler.setFormatter(formatter)
     file_handler.setFormatter(formatter)
@@ -26,116 +38,139 @@ if not logger.handlers:
     logger.addHandler(console_handler)
     logger.addHandler(file_handler)
 
-    
-def load_params(params_path: str) -> dict:
+# Load Parameters
+def load_params(path):
 
     try:
-        with open(params_path, "r") as file:
+        with open(path, "r") as file:
             params = yaml.safe_load(file)
-        logger.info("Parameters loaded successfully.")
+        logger.info("Parameters loaded successfully")
         return params
-    except FileNotFoundError as e:
-        logger.error("Parameter file not found: %s", e)
-        raise
-    except yaml.YAMLError as e:
-        logger.error("YAML Parsing Error: %s", e)
-        raise
+
     except Exception as e:
-        logger.error("Unexpected Error: %s", e)
+        logger.error("Parameter loading failed: %s",e)
         raise
 
-def load_data(data_url: str) -> pd.DataFrame:
+# Load Dataset
+def load_data(url):
+
     try:
-        df = pd.read_csv(data_url)
-        logger.info("Dataset loaded successfully.")
-        logger.info("Dataset Shape: %s", df.shape)
+        df = pd.read_csv(url)
+        logger.info("Dataset loaded successfully")
+        logger.info("Dataset shape: %s",df.shape)
+        logger.info("Columns: %s",df.columns.tolist())
         return df
+
     except Exception as e:
-        logger.error("Error while loading dataset: %s", e)
+        logger.error("Dataset loading failed: %s",e)
         raise
 
-def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
+# Data Cleaning
+def preprocess_data(df):
+
     try:
         df = df.copy()
-        # Remove ID column because it has no predictive value.
-        df.drop(columns=["tweet_id"], inplace=True, errors="ignore")
-        # Keep selected sentiments
-        selected_sentiments = [
-            "happiness",
-            "sadness",
-            "neutral",
-            "love",
-            "anger",
-            "worry",
-            "surprise",
-            "hate",
-            "enthusiasm",
-            "fun",
-            "relief"
-        ]
-        final_df = df[df["sentiment"].isin(selected_sentiments)].copy()
-        # Label Encoding
-        sentiment_mapping = {
-            "happiness": 0,
-            "sadness": 1,
-            "neutral": 2,
-            "love": 3,
-            "anger": 4,
-            "worry": 5,
-            "surprise": 6,
-            "hate": 7,
-            "enthusiasm": 8,
-            "fun": 9,
-            "relief": 10
-            }
-        
-        final_df["sentiment"] = final_df["sentiment"].map(sentiment_mapping)
+        # Remove id column
+        df.drop(columns=["tweet_id"],inplace=True,errors="ignore")
 
-        logger.info("Preprocessing Completed")
+        # Check columns
+        required_columns = ["content","sentiment"]
 
-        logger.info("Remaining Dataset Shape: %s",final_df.shape)
-        logger.info("\nSentiment Distribution:\n%s",final_df["sentiment"].value_counts())
-        return final_df
+        for col in required_columns:
+            if col not in df.columns:
+                raise ValueError(f"Missing column: {col}")
+
+        # Remove missing values
+        df.dropna(subset=["content","sentiment"],inplace=True)
+
+        # Remove duplicate rows
+        before = len(df)
+        df.drop_duplicates(inplace=True)
+        duplicates_removed = (before - len(df))
+
+        # Clean labels
+        df["sentiment"] = (df["sentiment"].astype(str).str.lower().str.strip())
+
+        # Remove invalid labels
+        df = df[df["sentiment"] != ""]
+        logger.info("Duplicates removed: %s",duplicates_removed)
+        logger.info("Final shape: %s",df.shape)
+        logger.info("Emotion classes:\n%s",df["sentiment"].value_counts())
+        return df
+    
     except Exception as e:
-        logger.error("Preprocessing Error: %s", e)
+        logger.error("Preprocessing failed: %s",e)
         raise
 
-def split_data(df: pd.DataFrame,test_size: float):
-
-    train_data, test_data = train_test_split(df,test_size=test_size,random_state=42,stratify=df["sentiment"])
-    logger.info("Train Shape: %s", train_data.shape)
-    logger.info("Test Shape: %s", test_data.shape)
-    return train_data, test_data
-
-def save_data(train_data: pd.DataFrame,test_data: pd.DataFrame,data_path: str):
+# Train Test Split
+def split_data(df,test_size,random_state):
 
     try:
-        raw_path = os.path.join(data_path, "raw")
-        os.makedirs(raw_path, exist_ok=True)
+        train_df, test_df = train_test_split(
+            df,test_size=test_size,
+            random_state=random_state,
+            stratify=df["sentiment"])
+        logger.info("Train shape: %s",train_df.shape)
+        logger.info("Test shape: %s",test_df.shape)
+        return train_df, test_df
 
-        train_data.to_csv(os.path.join(raw_path, "train.csv"),index=False)
-        test_data.to_csv(os.path.join(raw_path, "test.csv"),index=False)
-        logger.info("Train & Test datasets saved successfully.")
     except Exception as e:
-        logger.error("Saving Error: %s", e)
+        logger.error("Split failed: %s",e)
         raise
 
+# Save Data
+def save_data(train_df,test_df):
+    try:
+        os.makedirs("./data/raw",exist_ok=True)
+        train_df.to_csv("./data/raw/train.csv",index=False)
+        test_df.to_csv("./data/raw/test.csv",index=False)
+        logger.info("Raw data saved successfully")
+    except Exception as e:
+        logger.error("Saving failed: %s",e)
+        raise
+
+# Main Pipeline
 def main():
-    try:
-        # Step 1
-        params = load_params("params.yaml")
-        test_size = params["data_ingestion"]["test_size"]
-        # Step 2
-        df = load_data("https://raw.githubusercontent.com/campusx-official/jupyter-masterclass/main/tweet_emotions.csv")
-        # Step 3
-        final_df = preprocess_data(df)
-        # Step 4
-        train_data, test_data = split_data(final_df, test_size)
-        # Step 5
-        save_data(train_data, test_data, "./data")
-        logger.info("Data Ingestion Completed Successfully.")
-    except Exception as e:
-        logger.error("Pipeline Failed: %s", e)
-        print(e)
+    with mlflow.start_run(run_name="data_ingestion"):
+
+
+        try:
+            params = load_params("params.yaml")
+            data_params = params["data_ingestion"]
+            test_size = data_params["test_size"]
+            random_state = data_params["random_state"]
+            mlflow.log_params({
+                "test_size": test_size,
+                "random_state": random_state
+            })
+
+            # Dataset URL
+            data_url = (
+                "https://raw.githubusercontent.com/"
+                "campusx-official/""jupyter-masterclass/main/""tweet_emotions.csv")
+            df = load_data(data_url)
+            mlflow.log_param("dataset","tweet_emotions.csv")
+            mlflow.log_metric("original_rows",len(df))
+
+            # Cleaning
+            processed_df = preprocess_data(df)
+            mlflow.log_metric("processed_rows",len(processed_df))
+
+            # Verify labels
+            logger.info("Final labels: %s",processed_df["sentiment"].unique())
+
+            # Split
+            train_df, test_df = split_data(processed_df,test_size,random_state)
+            mlflow.log_metric("train_rows",len(train_df))
+            mlflow.log_metric("test_rows",len(test_df))
+
+            # Save
+            save_data(train_df,test_df)
+            logger.info("Data ingestion completed successfully")
+        except Exception as e:
+            logger.exception("Pipeline failed: %s",e)
+            raise
+
 if __name__ == "__main__":
+
     main()
