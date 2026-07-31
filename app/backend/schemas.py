@@ -1,28 +1,8 @@
-"""
-=========================================================
-Pydantic Schemas
-=========================================================
-
-This file contains request and response schemas used
-by the FastAPI application.
-
-Author : Aman Kumar
-Project: Emotion Detection
-=========================================================
-"""
-
 from pydantic import BaseModel, Field
 
-
-# -------------------------------------------------------
 # Request Schema
-# -------------------------------------------------------
-
 class TextInput(BaseModel):
-    """
-    Request model for emotion prediction.
-    """
-
+    """Request model for emotion prediction."""
     text: str = Field(
         ...,
         min_length=1,
@@ -31,44 +11,23 @@ class TextInput(BaseModel):
         example="I am very happy today!"
     )
 
-
-# -------------------------------------------------------
 # Response Schema
-# -------------------------------------------------------
-
 class PredictionResponse(BaseModel):
-    """
-    Response model for prediction.
-    """
-
+    """Response model for prediction."""
     success: bool
     input_text: str
     emotion: str
     confidence: float | None = None
 
-
-# -------------------------------------------------------
 # Health Check Schema
-# -------------------------------------------------------
-
 class HealthResponse(BaseModel):
-    """
-    Health check response.
-    """
-
+    """Health check response."""
     status: str
     message: str
 
-
-# -------------------------------------------------------
 # API Info Schema
-# -------------------------------------------------------
-
 class APIInfo(BaseModel):
-    """
-    API information.
-    """
-
+    """API information."""
     project: str
     version: str
     framework: str
