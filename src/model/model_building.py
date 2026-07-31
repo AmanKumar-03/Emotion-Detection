@@ -12,7 +12,7 @@ import mlflow.sklearn
 import dagshub
 
 from scipy.sparse import load_npz
-
+from mlflow.models import infer_signature
 from sklearn.linear_model import LogisticRegression
 
 from sklearn.metrics import (
@@ -120,11 +120,13 @@ def save_model(model):
 
 # Pipeline
 def run_pipeline():
+
     params = load_params("params.yaml")
     model_params = params["model_building"]
 
     X_train = load_npz("./data/processed/train_tfidf.npz")
     X_test = load_npz("./data/processed/test_tfidf.npz")
+
     y_train = load_labels("./data/interim/train_processed.csv")
     y_test = load_labels("./data/interim/test_processed.csv")
 
@@ -135,39 +137,107 @@ def run_pipeline():
     if X_test.shape[0] != len(y_test):
         raise ValueError("Testing data mismatch")
 
+
     model, training_time = train_model(
         X_train,
         y_train,
         model_params
     )
+
+
     train_pred = model.predict(X_train)
     test_pred = model.predict(X_test)
 
+
     metrics = {
-        "train_accuracy":float(accuracy_score(y_train,train_pred)),
-        "test_accuracy":float(accuracy_score(y_test,test_pred)),
-        "precision":float(precision_score(y_test,test_pred,average="weighted",zero_division=0)),
-        "recall":float(recall_score(y_test,test_pred,average="weighted",zero_division=0)),
-        "f1_score":float(f1_score(y_test,test_pred,average="weighted",zero_division=0))
+        "train_accuracy": float(
+            accuracy_score(y_train, train_pred)
+        ),
+
+        "test_accuracy": float(
+            accuracy_score(y_test, test_pred)
+        ),
+
+        "precision": float(
+            precision_score(
+                y_test,
+                test_pred,
+                average="weighted",
+                zero_division=0
+            )
+        ),
+
+        "recall": float(
+            recall_score(
+                y_test,
+                test_pred,
+                average="weighted",
+                zero_division=0
+            )
+        ),
+
+        "f1_score": float(
+            f1_score(
+                y_test,
+                test_pred,
+                average="weighted",
+                zero_division=0
+            )
+        )
     }
+
+
     logger.info(metrics)
 
-    # Only MLflow outside CI
-    if os.getenv("CI") != "true":
-        mlflow.log_params(model_params)
-        mlflow.log_metrics(metrics)
-        mlflow.log_metric("training_time",training_time)
-        mlflow.set_tag("model_type","Logistic Regression")
+
+    # Save model
     model_path = save_model(model)
 
+
+    # MLflow logging
     if os.getenv("CI") != "true":
-        mlflow.log_artifact(model_path)
+
+        mlflow.log_params(
+            model_params
+        )
+
+        mlflow.log_metrics(
+            metrics
+        )
+
+        mlflow.log_metric(
+            "training_time",
+            training_time
+        )
+
+
+        mlflow.set_tag(
+            "model_type",
+            "Logistic Regression"
+        )
+
+
+        mlflow.log_artifact(
+            model_path
+        )
+
+
+        signature = infer_signature(
+            X_train,
+            model.predict(X_train)
+        )
+
+
         mlflow.sklearn.log_model(
             sk_model=model,
             artifact_path="model",
-            registered_model_name="Emotion_Detection_Model1"
-            )
-    logger.info("Model building completed successfully")
+            signature=signature
+        )
+
+
+    logger.info(
+        "Model building completed successfully"
+    )
 
 # Main
 def main():

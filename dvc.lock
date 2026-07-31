@@ -121,8 +121,8 @@ stages:
       size: 843
     - path: src/model/model_building.py
       hash: md5
-      md5: d83d5bd1ada8d09194e5c218e9b6cb5e
-      size: 6818
+      md5: 22687218805905682c7382dc4a794645
+      size: 6093
     params:
       params.yaml:
         model_building.C: 1
@@ -157,8 +157,8 @@ stages:
       size: 843
     - path: src/model/model_evaluation.py
       hash: md5
-      md5: e7fe41190901c40dca46dc245ec756b6
-      size: 5574
+      md5: 9267227fc2b9197b664d338fd32d8b61
+      size: 4302
     params:
       params.yaml:
         model_evaluation.average_method: weighted
@@ -192,5 +192,5 @@ stages:
       size: 153
     - path: src/model/model_registry.py
       hash: md5
-      md5: 16a52ee1df9a5a3f00cfa50fff5595d8
-      size: 4691
+      md5: 216903af75e71a04c7c6a2396292e3a3
+      size: 5514

@@ -87,18 +87,68 @@ def load_metrics():
     return metrics
 
 # Assign Champion Alias
-def set_champion_alias(model_name,version):
+def set_alias(
+        model_name,
+        alias,
+        version
+):
+
     try:
+
         client = MlflowClient()
+
         client.set_registered_model_alias(
             name=model_name,
-            alias="champion",
+            alias=alias,
             version=version
         )
-        logger.info("Version %s assigned as champion",version)
+
+        logger.info(
+            "Version %s assigned to %s",
+            version,
+            alias
+        )
+
+
     except Exception as e:
-        logger.error("Alias update failed: %s",e)
+
+        logger.error(
+            "Alias update failed: %s",
+            e
+        )
+
         raise
+
+
+
+def set_staging(model_name,version):
+
+    set_alias(
+        model_name,
+        "staging",
+        version
+    )
+
+
+
+def set_production(model_name,version):
+
+    set_alias(
+        model_name,
+        "production",
+        version
+    )
+
+
+
+def set_champion(model_name,version):
+
+    set_alias(
+        model_name,
+        "champion",
+        version
+    )
+
 
 # Register Model
 def register_model():
@@ -152,13 +202,27 @@ def register_model():
         model_uri = (f"runs:/{run_id}/model")
         logger.info("Registering model from %s",run_id)
         registered_model = (mlflow.register_model(model_uri,MODEL_NAME))
-        logger.info("Model registered")
+        version = registered_model.version
+        logger.info("Model registered Version %s",version)
 
         # Set champion model
-        set_champion_alias(
+        set_staging(
             MODEL_NAME,
-            registered_model.version
+            version
         )
+        if accuracy >= MIN_ACCURACY and f1 >= MIN_F1_SCORE:
+
+
+            set_production(
+                MODEL_NAME,
+                version
+            )
+
+
+            set_champion(
+                MODEL_NAME,
+                version
+            )
         print("\n==============================")
         print("MODEL REGISTRATION SUCCESS")
         print("Model:",MODEL_NAME)
