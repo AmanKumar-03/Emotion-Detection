@@ -5,106 +5,68 @@ stages:
     deps:
     - path: params.yaml
       hash: md5
-<<<<<<< Updated upstream
-      md5: 0d23dd398a1fac8b4a7bf551754103e7
-      size: 156
+      md5: 897241478157c8215418cabbe5cf70d1
+      size: 842
     - path: src/data/data_ingestion.py
       hash: md5
-      md5: 51d2da29d94c26e39e182cc884cf787a
-      size: 4590
-=======
-      md5: e4ee2ab96f1cffbd303934efc3732515
-      size: 422
-    - path: src/data/data_ingestion.py
-      hash: md5
-      md5: 48de2bd991a793c6d603a52a0f759379
-      size: 4450
-    params:
-      params.yaml:
-        data_ingestion.random_state: 42
-        data_ingestion.test_size: 0.2
->>>>>>> Stashed changes
+      md5: 5bae74aa965f26859805cf64b4e6c4b5
+      size: 5190
     outs:
     - path: data/raw/test.csv
       hash: md5
-      md5: 4fdd89b3edad6998932ba2cd2049c276
-      size: 609638
+      md5: 90deeca265fd7ebb4e500522a1fe472e
+      size: 664381
     - path: data/raw/train.csv
       hash: md5
-      md5: 93efeee1952618a26788acb064a6423c
-      size: 2436913
+      md5: 03178c0c84eaeb4aca0f84901c8dd203
+      size: 2658948
   data_preprocessing:
     cmd: python src/data/data_preprocessing.py
     deps:
     - path: data/raw/test.csv
       hash: md5
-      md5: 4fdd89b3edad6998932ba2cd2049c276
-      size: 609638
+      md5: 90deeca265fd7ebb4e500522a1fe472e
+      size: 664381
     - path: data/raw/train.csv
       hash: md5
-      md5: 93efeee1952618a26788acb064a6423c
-      size: 2436913
-<<<<<<< Updated upstream
+      md5: 03178c0c84eaeb4aca0f84901c8dd203
+      size: 2658948
+    - path: params.yaml
+      hash: md5
+      md5: 897241478157c8215418cabbe5cf70d1
+      size: 842
     - path: src/data/data_preprocessing.py
       hash: md5
       md5: 698ebf8b1a173eb118bb3dc347a2617d
       size: 5606
-=======
-    - path: params.yaml
-      hash: md5
-      md5: e4ee2ab96f1cffbd303934efc3732515
-      size: 422
-    - path: src/data/data_preprocessing.py
-      hash: md5
-      md5: 9509e28f9fe9e935702f24bcb1eb3067
-      size: 5384
-    params:
-      params.yaml:
-        data_preprocessing:
-          remove_stopwords: true
-          lemmatization: true
-          remove_small_sentences: true
-          min_words: 3
->>>>>>> Stashed changes
     outs:
     - path: data/interim/test_processed.csv
       hash: md5
-      md5: cf676bc65481d50b42b588dd45b7a373
-      size: 340320
+      md5: da1dcac3ecc5e9909363f18cd026940b
+      size: 382259
     - path: data/interim/train_processed.csv
       hash: md5
-      md5: 5f90ce0a599bcbaa61d85071c3a9ef4c
-      size: 1357162
+      md5: 3117d0e63d9b1d4bb16bdf55b95159b8
+      size: 1535793
   feature_engineering:
     cmd: python src/features/feature_engineering.py
     deps:
     - path: data/interim/test_processed.csv
       hash: md5
-      md5: cf676bc65481d50b42b588dd45b7a373
-      size: 340320
+      md5: da1dcac3ecc5e9909363f18cd026940b
+      size: 382259
     - path: data/interim/train_processed.csv
       hash: md5
-      md5: 5f90ce0a599bcbaa61d85071c3a9ef4c
-      size: 1357162
+      md5: 3117d0e63d9b1d4bb16bdf55b95159b8
+      size: 1535793
     - path: params.yaml
       hash: md5
-<<<<<<< Updated upstream
-      md5: 0d23dd398a1fac8b4a7bf551754103e7
-      size: 156
+      md5: 897241478157c8215418cabbe5cf70d1
+      size: 842
     - path: src/features/feature_engineering.py
       hash: md5
-      md5: 8c2e05766b6143db8801591cbebe384b
-      size: 4454
-    params:
-      params.yaml:
-        feature_engineering.max_features: 500
-=======
-      md5: e4ee2ab96f1cffbd303934efc3732515
-      size: 422
-    - path: src/features/feature_engineering.py
-      hash: md5
-      md5: fc4b01e988aa5775d043e69c140cb19e
-      size: 4044
+      md5: 5fbed58b9de86e6eb1040fd68327e5ec
+      size: 5388
     params:
       params.yaml:
         feature_engineering.max_df: 0.95
@@ -112,110 +74,124 @@ stages:
         feature_engineering.min_df: 2
         feature_engineering.ngram_max: 2
         feature_engineering.ngram_min: 1
->>>>>>> Stashed changes
+        feature_engineering.vectorizer: tfidf
     outs:
-    - path: data/processed/test_tfidf.csv
+    - path: artifacts/vectorizer.pkl
       hash: md5
-<<<<<<< Updated upstream
-      md5: cc8712f3cc84ff058a2b054f32cec028
-      size: 14300402
-    - path: data/processed/train_tfidf.csv
+      md5: ce15d6a25638849498e75196aaa10a9e
+      size: 184594
+    - path: data/processed/test_labels.npy
       hash: md5
-      md5: 06c95b10d8fd0d0470f03add1e32a355
-      size: 56957162
-=======
-      md5: 1e94f18e7e609abf0c17367669d5cd44
-      size: 69199817
-    - path: data/processed/train_bow.csv
+      md5: 6a629427cd0c35282cec8ff155a6b55b
+      size: 14369
+    - path: data/processed/test_tfidf.npz
       hash: md5
-      md5: d4c89b9154f84bfbd9f10ca27be1506d
-      size: 275432495
->>>>>>> Stashed changes
+      md5: c04fb398fcc7dec0096dbb119ae361d9
+      size: 454102
+    - path: data/processed/train_labels.npy
+      hash: md5
+      md5: 601c276369a526e4b3972eedb5b0b30d
+      size: 56843
+    - path: data/processed/train_tfidf.npz
+      hash: md5
+      md5: db8dfeafa3568f414327b41d94177dff
+      size: 1885450
   model_building:
     cmd: python src/model/model_building.py
     deps:
-    - path: data/processed/train_tfidf.csv
+    - path: data/interim/test_processed.csv
       hash: md5
-<<<<<<< Updated upstream
-      md5: 06c95b10d8fd0d0470f03add1e32a355
-      size: 56957162
+      md5: da1dcac3ecc5e9909363f18cd026940b
+      size: 382259
+    - path: data/interim/train_processed.csv
+      hash: md5
+      md5: 3117d0e63d9b1d4bb16bdf55b95159b8
+      size: 1535793
+    - path: data/processed/test_tfidf.npz
+      hash: md5
+      md5: c04fb398fcc7dec0096dbb119ae361d9
+      size: 454102
+    - path: data/processed/train_tfidf.npz
+      hash: md5
+      md5: db8dfeafa3568f414327b41d94177dff
+      size: 1885450
     - path: params.yaml
       hash: md5
-      md5: 0d23dd398a1fac8b4a7bf551754103e7
-      size: 156
+      md5: 897241478157c8215418cabbe5cf70d1
+      size: 842
     - path: src/model/model_building.py
       hash: md5
-      md5: 92577b56b10cdc1829d6cb2cb954198f
-      size: 3429
+      md5: 7adf6ffa35dd2ddbce027467615c95b7
+      size: 5817
     params:
       params.yaml:
-        model_building.learning_rate: 0.1
-        model_building.max_depth: 5
-        model_building.n_estimators: 100
+        model_building.C: 1
+        model_building.class_weight: balanced
+        model_building.max_iter: 500
+        model_building.model_type: logistic_regression
+        model_building.random_state: 42
+        model_building.solver: lbfgs
     outs:
-    - path: models/model.pkl
+    - path: artifacts/model.pkl
       hash: md5
-      md5: 933a73070c2c0f0ded1fb00ad05f5ce0
-      size: 3018980
-=======
-      md5: d4c89b9154f84bfbd9f10ca27be1506d
-      size: 275432495
-    - path: params.yaml
-      hash: md5
-      md5: e4ee2ab96f1cffbd303934efc3732515
-      size: 422
-    - path: src/model/model_building.py
-      hash: md5
-      md5: 75b54d1aa554e79f598cefb585116cf8
-      size: 3422
-    params:
-      params.yaml:
-        model_building.C: 1.0
-        model_building.learning_rate: 0.05
-        model_building.max_depth: 5
-        model_building.max_iter: 5000
-        model_building.n_estimators: 300
-    outs:
-    - path: models/model.pkl
-      hash: md5
-      md5: 0c7ff9c0d976c62e1a642a0becafb345
-      size: 440872
->>>>>>> Stashed changes
+      md5: da73b53f1029d36c16740d81ed5cd14b
+      size: 520925
   model_evaluation:
     cmd: python src/model/model_evaluation.py
     deps:
-    - path: data/processed/test_tfidf.csv
+    - path: artifacts/model.pkl
       hash: md5
-<<<<<<< Updated upstream
-      md5: cc8712f3cc84ff058a2b054f32cec028
-      size: 14300402
-    - path: models/model.pkl
+      md5: da73b53f1029d36c16740d81ed5cd14b
+      size: 520925
+    - path: data/interim/test_processed.csv
       hash: md5
-      md5: 933a73070c2c0f0ded1fb00ad05f5ce0
-      size: 3018980
+      md5: da1dcac3ecc5e9909363f18cd026940b
+      size: 382259
+    - path: data/processed/test_tfidf.npz
+      hash: md5
+      md5: c04fb398fcc7dec0096dbb119ae361d9
+      size: 454102
+    - path: params.yaml
+      hash: md5
+      md5: 897241478157c8215418cabbe5cf70d1
+      size: 842
     - path: src/model/model_evaluation.py
       hash: md5
-      md5: 91232f43ba88d972d5d93819b5d836da
-      size: 3585
+      md5: 79cb758d28c02f2dbe8db55633a34628
+      size: 4508
+    params:
+      params.yaml:
+        model_evaluation.average_method: weighted
+        model_evaluation.save_confusion_matrix: true
     outs:
+    - path: reports/classification_report.txt
+      hash: md5
+      md5: 76aa33e7bb62bc0b2f80c3d12d24ea51
+      size: 939
+    - path: reports/confusion_matrix.png
+      hash: md5
+      md5: d5303cd6baa7883ebbb5b7e92878be28
+      size: 18692
     - path: reports/metrics.json
       hash: md5
-      md5: 81a4cb33e6482168b3a952eb7bb9f92c
-      size: 187
-=======
-      md5: 1e94f18e7e609abf0c17367669d5cd44
-      size: 69199817
-    - path: models/model.pkl
+      md5: 69dccd2a82088a41ae6f0a301324aa8b
+      size: 153
+  model_registry:
+    cmd: python src/model/model_registry.py
+    deps:
+    - path: artifacts/model.pkl
       hash: md5
-      md5: 0c7ff9c0d976c62e1a642a0becafb345
-      size: 440872
-    - path: src/model/model_evaluation.py
+      md5: da73b53f1029d36c16740d81ed5cd14b
+      size: 520925
+    - path: params.yaml
       hash: md5
-      md5: 2cdfd9a2637b8490ac15d67168aeb178
-      size: 3181
-    outs:
+      md5: 897241478157c8215418cabbe5cf70d1
+      size: 842
     - path: reports/metrics.json
       hash: md5
-      md5: f541fbdae762447f6a5310e8dfb64d94
-      size: 189
->>>>>>> Stashed changes
+      md5: 69dccd2a82088a41ae6f0a301324aa8b
+      size: 153
+    - path: src/model/model_registry.py
+      hash: md5
+      md5: 4e7a25bdb8d02ebe846cff8f22d88f02
+      size: 4023

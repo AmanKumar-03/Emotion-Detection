@@ -2,138 +2,186 @@ import os
 import pickle
 import logging
 import yaml
-import pandas as pd
-import numpy as np
+import time
 
-<<<<<<< Updated upstream
-from sklearn.ensemble import GradientBoostingClassifier
-=======
+import pandas as pd
+
+import mlflow
+import mlflow.sklearn
+
+import dagshub
+
+from scipy.sparse import load_npz
 
 from sklearn.linear_model import LogisticRegression
->>>>>>> Stashed changes
 
+from sklearn.metrics import (
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score
+)
 
+# DagsHub + MLflow Configuration
+dagshub.init(repo_owner="AmanKumar-03",repo_name="Emotion-Detection",mlflow=True)
+
+mlflow.set_tracking_uri("https://dagshub.com/AmanKumar-03/Emotion-Detection.mlflow")
+mlflow.set_experiment("Emotion_Detection")
+
+# Logger Configuration
 logger = logging.getLogger("model_building")
 logger.setLevel(logging.DEBUG)
-
 
 if not logger.handlers:
 
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.DEBUG)
+    console_handler.setLevel(logging.INFO)
 
     file_handler = logging.FileHandler("model_building_errors.log")
     file_handler.setLevel(logging.ERROR)
-    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
     console_handler.setFormatter(formatter)
     file_handler.setFormatter(formatter)
 
     logger.addHandler(console_handler)
     logger.addHandler(file_handler)
 
+# Load Parameters
+def load_params(path):
 
-def load_params(params_path: str) -> dict:
-    
     try:
-        with open(params_path, "r") as file:
+        with open(path,"r") as file:
             params = yaml.safe_load(file)
-        logger.info("Parameters loaded successfully.")
+        logger.info("Parameters loaded successfully")
         return params
-    except FileNotFoundError as e:
-        logger.error("Parameter file not found: %s",e)
-        raise
-    except yaml.YAMLError as e:
-        logger.error("YAML error: %s",e)
-        raise
 
-def load_data(file_path: str):
-    try:
-        df = pd.read_csv(file_path)
-        logger.info("Data loaded from %s",file_path)
-        logger.info("Dataset Shape: %s",df.shape)
-        return df
-    
     except Exception as e:
-        logger.error("Data loading error: %s",e)
+        logger.error("Parameter loading failed: %s",e)
         raise
 
-<<<<<<< Updated upstream
-def train_model(x_train: np.ndarray,y_train: np.ndarray,params: dict):
-    """
-    Train Gradient Boosting Classifier.
-    This model supports multi-class classification.
-    """
+# Load Labels
+def load_labels(path):
+
     try:
-        model = GradientBoostingClassifier(
-            n_estimators=params["n_estimators"],
-            learning_rate=params["learning_rate"],
-            max_depth=params["max_depth"],
-            random_state=42
-            )
-        model.fit(x_train,y_train)
-        logger.info("Model training completed.")
-=======
-def train_model(X_train: np.ndarray, y_train: np.ndarray, params: dict):
+        df = pd.read_csv(path)
+        labels = df["sentiment"].values
+        logger.info("Labels loaded: %s",labels.shape)
+        return labels
+
+    except Exception as e:
+        logger.error("Label loading failed: %s",e)
+        raise
+
+# Train Model
+def train_model(X_train,y_train,model_params):
+
     try:
-        model_type = params["model_type"].lower()
-        logger.info("Selected Model : %s", model_type)
+
+        model_type = model_params["model_type"]
         if model_type == "logistic_regression":
             model = LogisticRegression(
-                C=params["C"],
-                max_iter=params["max_iter"],
-                solver="lbfgs",
-                random_state=42
+                C=model_params["C"],
+                solver=model_params["solver"],
+                max_iter=model_params["max_iter"],
+                random_state=model_params["random_state"],
+                class_weight="balanced"
             )
-            
         else:
-            raise ValueError(f"Unsupported model type : {model_type}")
+            raise ValueError(f"Unsupported model: {model_type}")
 
-        model.fit(X_train, y_train)
-        logger.info("Model training completed successfully.")
->>>>>>> Stashed changes
-        return model
+        logger.info("Training started...")
+        start_time = time.time()
+        model.fit(X_train,y_train)
+        training_time = (time.time() - start_time)
+        logger.info("Training completed in %.4f seconds",training_time)
+        return (model,training_time)
+    
     except Exception as e:
-        logger.error("Training error: %s",e)
+        logger.error("Training failed: %s",e)
         raise
 
-def save_model(model,file_path: str):
+# Save Model For FastAPI
+def save_model(model):
     try:
-        os.makedirs(os.path.dirname(file_path),exist_ok=True)
-        with open(file_path,"wb") as file:
+        os.makedirs("artifacts",exist_ok=True)
+        model_path = ("artifacts/model.pkl")
+        with open(model_path,"wb") as file:
             pickle.dump(model,file)
-        logger.info("Model saved at %s",file_path)
+        logger.info("Model saved: %s",model_path)
+        return model_path
+
     except Exception as e:
-        logger.error("Model saving error: %s",e)
+        logger.error("Model saving failed: %s",e)
         raise
 
+# Main Pipeline
 def main():
-    try:
-        # Load parameters
-        params = load_params("params.yaml")
-        model_params = params["model_building"]
+    with mlflow.start_run(run_name="logistic_regression_best_model"):
 
-        # Load processed features
-        train_data = load_data("./data/processed/train_tfidf.csv")
-        test_data = load_data("./data/processed/test_tfidf.csv")
+        try:
+            # Load Params
+            params = load_params("params.yaml")
+            model_params = params["model_building"]
 
-        # Split features and target
-        X_train = train_data.drop("sentiment",axis=1).values
-        y_train = train_data["sentiment"].values
-        X_test = test_data.drop("sentiment",axis=1).values
-        y_test = test_data["sentiment"].values
-        logger.info("Training samples: %s",X_train.shape)
+            # Load Features
+            X_train = load_npz("./data/processed/train_tfidf.npz")
+            X_test = load_npz("./data/processed/test_tfidf.npz")
+            logger.info("Train shape: %s",X_train.shape)
+            logger.info("Test shape: %s",X_test.shape)
 
-        # Train model
-        model = train_model(X_train,y_train,model_params)
+            # Load Labels
+            y_train = load_labels("./data/interim/train_processed.csv")
+            y_test = load_labels("./data/interim/test_processed.csv")
 
-        # Save model
-        save_model(model,"./models/model.pkl")
-        logger.info("Model Building Completed Successfully.")
-    except Exception as e:
-        logger.error("Model pipeline failed: %s",e)
-        print(f"Error: {e}")
+            if X_train.shape[0] != len(y_train):
+                raise ValueError("Training data mismatch")
+
+            if X_test.shape[0] != len(y_test):
+                raise ValueError("Testing data mismatch")
+
+            # Train
+            model, training_time = train_model(
+                X_train,
+                y_train,
+                model_params
+            )
+
+            # Prediction
+            train_pred = model.predict(X_train)
+            test_pred = model.predict(X_test)
+
+            # Metrics
+            metrics = {
+                "train_accuracy":float(accuracy_score(y_train,train_pred)),
+                "test_accuracy":float(accuracy_score(y_test,test_pred)),
+                "precision":float(precision_score(y_test,test_pred,average="weighted",zero_division=0)),
+                "recall":float(recall_score(y_test,test_pred,average="weighted",zero_division=0)),
+                "f1_score":float(f1_score(y_test,test_pred,average="weighted",zero_division=0))
+            }
+            logger.info(metrics)
+
+            # MLflow Logging
+            mlflow.log_params(model_params)
+            mlflow.log_metrics(metrics)
+            mlflow.log_metric("training_time",training_time)
+            mlflow.set_tag("model_type","Logistic Regression")
+            mlflow.set_tag("framework","scikit-learn")
+            mlflow.set_tag("project","Emotion Detection")
+
+            # Save Model
+            model_path = save_model(model)
+            mlflow.log_artifact(model_path)
+
+            # MLflow Model Registry
+            mlflow.sklearn.log_model(
+                sk_model=model,
+                artifact_path="model",
+                registered_model_name="Emotion_Detection_Model")
+            logger.info("Model registered successfully")
+        except Exception as e:
+            logger.exception("Model building failed: %s",e)
+            raise
 
 if __name__ == "__main__":
-
     main()
