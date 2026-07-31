@@ -129,70 +129,32 @@ def remove_small_sentences(df):
     return df
 
 def normalize_text(df):
-
     try:
-
         df = df.copy()
-
-
-        df["content"] = (
-            df["content"]
-            .fillna("")
-            .astype(str)
-        )
-
+        df["content"] = (df["content"].fillna("").astype(str))
 
         steps = [
-
             lower_case,
-
             remove_urls,
-
             remove_html,
-
             remove_emails,
-
             remove_mentions,
-
             remove_hashtags,
-
             remove_numbers,
-
             remove_punctuation,
-
             remove_extra_spaces,
-
             remove_stop_words,
-
             lemmatization
-
         ]
 
-
         for step in steps:
+            df["content"] = (df["content"].apply(step))
 
-            df["content"] = (
-                df["content"]
-                .apply(step)
-            )
-
-
-        df = remove_small_sentences(
-            df
-        )
-
-
+        df = remove_small_sentences(df)
         return df
 
-
-
     except Exception as e:
-
-        logger.exception(
-            "Preprocessing failed: %s",
-            e
-        )
-
+        logger.exception("Preprocessing failed: %s",e)
         raise
 
 def save_processed_data(train_df, test_df, output_path):

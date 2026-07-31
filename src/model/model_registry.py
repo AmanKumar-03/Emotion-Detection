@@ -40,22 +40,40 @@ if os.getenv("CI") == "true":
 
     exit(0)
 
-# MLflow Configuration
+# ==========================
+# MLflow + DagsHub Configuration
+# ==========================
+
 DAGSHUB_USERNAME = os.getenv("DAGSHUB_USERNAME")
 DAGSHUB_TOKEN = os.getenv("DAGSHUB_TOKEN")
 
-if not DAGSHUB_USERNAME or not DAGSHUB_TOKEN:
 
-    raise Exception(
-        "DagsHub credentials missing"
+if DAGSHUB_USERNAME and DAGSHUB_TOKEN:
+
+    os.environ["MLFLOW_TRACKING_USERNAME"] = DAGSHUB_USERNAME
+    os.environ["MLFLOW_TRACKING_PASSWORD"] = DAGSHUB_TOKEN
+
+    logger.info("DagsHub authentication configured")
+
+else:
+
+    logger.warning(
+        "DagsHub credentials missing. Running without authentication."
     )
-os.environ["MLFLOW_TRACKING_USERNAME"] = DAGSHUB_USERNAME
-os.environ["MLFLOW_TRACKING_PASSWORD"] = DAGSHUB_TOKEN
 
-mlflow.set_tracking_uri("https://dagshub.com/AmanKumar-03/Emotion-Detection.mlflow")
 
-EXPERIMENT_NAME = ("Emotion_Detection")
-MODEL_NAME = ("Emotion_Detection_Model1")
+mlflow.set_tracking_uri(
+    "https://dagshub.com/AmanKumar-03/Emotion-Detection.mlflow"
+)
+
+mlflow.set_registry_uri(
+    "https://dagshub.com/AmanKumar-03/Emotion-Detection.mlflow"
+)
+
+
+EXPERIMENT_NAME = "Emotion_Detection"
+
+MODEL_NAME = "Emotion_Detection_Model1"
 
 
 MIN_ACCURACY = 0.25

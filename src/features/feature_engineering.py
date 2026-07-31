@@ -120,179 +120,57 @@ def save_vectorizer(vectorizer):
         logger.error("Vectorizer saving failed: %s",e)
         raise
 
-# =====================================================
 # Pipeline
-# =====================================================
-
 def run_pipeline():
-
-
-    params = load_params(
-        "params.yaml"
-    )
-
-
-    feature_params = params[
-        "feature_engineering"
-    ]
-
-
+    params = load_params("params.yaml")
+    feature_params = params["feature_engineering"]
 
     if os.getenv("CI") != "true":
-
-        mlflow.log_params(
-
-            {
-
-            "vectorizer":
-            feature_params["vectorizer"],
-
-            "max_features":
-            feature_params["max_features"],
-
-            "ngram_min":
-            feature_params["ngram_min"],
-
-            "ngram_max":
-            feature_params["ngram_max"],
-
-            "min_df":
-            feature_params["min_df"],
-
-            "max_df":
-            feature_params["max_df"]
-
-            }
-
-        )
-
-
-
-    train_data = load_data(
-        "./data/interim/train_processed.csv"
-    )
-
-
-    test_data = load_data(
-        "./data/interim/test_processed.csv"
-    )
-
-
+        mlflow.log_params({
+            "vectorizer":feature_params["vectorizer"],
+            "max_features":feature_params["max_features"],
+            "ngram_min":feature_params["ngram_min"],
+            "ngram_max":feature_params["ngram_max"],
+            "min_df":feature_params["min_df"],
+            "max_df":feature_params["max_df"]
+            })
+    train_data = load_data("./data/interim/train_processed.csv")
+    test_data = load_data("./data/interim/test_processed.csv")
 
     X_train,X_test,y_train,y_test,vectorizer = apply_tfidf(
-
         train_data,
-
         test_data,
-
         feature_params
-
     )
 
+    os.makedirs("./data/processed",exist_ok=True)
+    save_npz("./data/processed/train_tfidf.npz",X_train)
+    save_npz("./data/processed/test_tfidf.npz",X_test)
+    np.save("./data/processed/train_labels.npy",np.array(y_train))
+    np.save("./data/processed/test_labels.npy",np.array(y_test))
 
-
-    os.makedirs(
-        "./data/processed",
-        exist_ok=True
-    )
-
-
-
-    save_npz(
-        "./data/processed/train_tfidf.npz",
-        X_train
-    )
-
-
-    save_npz(
-        "./data/processed/test_tfidf.npz",
-        X_test
-    )
-
-
-
-    np.save(
-
-        "./data/processed/train_labels.npy",
-
-        np.array(y_train)
-
-    )
-
-
-    np.save(
-
-        "./data/processed/test_labels.npy",
-
-        np.array(y_test)
-
-    )
-
-
-
-    vectorizer_path = save_vectorizer(
-        vectorizer
-    )
-
-
+    vectorizer_path = save_vectorizer(vectorizer)
 
     if os.getenv("CI") != "true":
-
-
         mlflow.log_metric(
-
             "vocabulary_size",
-
             len(vectorizer.vocabulary_)
-
         )
+        mlflow.log_artifact(vectorizer_path)
+    logger.info("Feature Engineering completed")
 
-
-        mlflow.log_artifact(
-            vectorizer_path
-        )
-
-
-
-    logger.info(
-        "Feature Engineering completed"
-    )
-
-
-
-# =====================================================
 # Main
-# =====================================================
-
 def main():
-
     try:
-
         if os.getenv("CI") != "true":
-
-            with mlflow.start_run(
-                run_name="tfidf_feature_engineering"
-            ):
-
+            with mlflow.start_run(run_name="tfidf_feature_engineering"):
                 run_pipeline()
-
-
         else:
-
             run_pipeline()
 
-
-
     except Exception as e:
-
-        logger.exception(
-            "Pipeline failed %s",
-            e
-        )
-
+        logger.exception("Pipeline failed %s",e)
         raise
-
-
 
 if __name__ == "__main__":
 

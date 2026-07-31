@@ -1,75 +1,48 @@
 stages:
 
 
-# ==========================
-# DATA INGESTION
-# ==========================
-
   data_ingestion:
 
     cmd: python src/data/data_ingestion.py
 
-
     deps:
-
       - src/data/data_ingestion.py
       - params.yaml
 
-
     outs:
-
       - data/raw/train.csv
       - data/raw/test.csv
 
 
-
-
-
-# ==========================
-# DATA PREPROCESSING
-# ==========================
 
   data_preprocessing:
 
     cmd: python src/data/data_preprocessing.py
 
-
     deps:
-
       - src/data/data_preprocessing.py
       - data/raw/train.csv
       - data/raw/test.csv
       - params.yaml
 
-
     outs:
-
       - data/interim/train_processed.csv
       - data/interim/test_processed.csv
 
 
 
-
-
-# ==========================
-# FEATURE ENGINEERING
-# ==========================
 
   feature_engineering:
 
     cmd: python src/features/feature_engineering.py
 
-
     deps:
-
       - src/features/feature_engineering.py
       - data/interim/train_processed.csv
       - data/interim/test_processed.csv
       - params.yaml
 
-
     params:
-
       - feature_engineering.vectorizer
       - feature_engineering.max_features
       - feature_engineering.ngram_min
@@ -77,10 +50,7 @@ stages:
       - feature_engineering.min_df
       - feature_engineering.max_df
 
-
-
     outs:
-
       - data/processed/train_tfidf.npz
       - data/processed/test_tfidf.npz
       - data/processed/train_labels.npy
@@ -90,34 +60,19 @@ stages:
 
 
 
-
-# ==========================
-# MODEL BUILDING
-# ==========================
-
   model_building:
 
     cmd: python src/model/model_building.py
 
-
     deps:
-
       - src/model/model_building.py
-
       - data/processed/train_tfidf.npz
-
       - data/processed/test_tfidf.npz
-
       - data/interim/train_processed.csv
-
       - data/interim/test_processed.csv
-
       - params.yaml
 
-
-
     params:
-
       - model_building.model_type
       - model_building.random_state
       - model_building.class_weight
@@ -125,82 +80,40 @@ stages:
       - model_building.solver
       - model_building.max_iter
 
-
-
     outs:
-
       - artifacts/model.pkl
 
 
-
-
-
-# ==========================
-# MODEL EVALUATION
-# ==========================
 
   model_evaluation:
 
-
     cmd: python src/model/model_evaluation.py
 
-
-
     deps:
-
       - src/model/model_evaluation.py
-
       - artifacts/model.pkl
-
       - data/processed/test_tfidf.npz
-
       - data/interim/test_processed.csv
-
-
+      - params.yaml
 
     params:
-
       - model_evaluation.average_method
 
-
-
     metrics:
-
       - reports/metrics.json
 
-
-
     outs:
-
       - reports/confusion_matrix.png
-
       - reports/classification_report.txt
 
 
 
-
-
-# ==========================
-# MODEL REGISTRY
-# ==========================
-
   model_registry:
-
 
     cmd: python src/model/model_registry.py
 
-
-
     deps:
-
       - src/model/model_registry.py
-
       - reports/metrics.json
-
       - artifacts/model.pkl
-
-
-
-    outs:
-
-      - logs/model_registry_errors.log
+      - params.yaml
