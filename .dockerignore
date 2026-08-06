@@ -1,0 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual Environments
+myenv/
+venv/
+.env
+.venv/
+
+# IDE Files
+.vscode/
+.idea/
+
+# Git
+.git/
+.gitignore
+
+# DVC
+.dvc/cache/
+.dvc/tmp/
+
+# Logs
+*.log
+logs/
+
+# Python Cache
+.pytest_cache/
+.mypy_cache/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+notebooks/
+
+# Build Files
+build/
+dist/
+*.egg-info/
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+
+# Documentation
+docs/
+
+# Temporary Files
+tmp/
+temp/
+
+# MLflow (if generated locally)
+mlruns/
+
+# Test Files
+tests/
+
+# Keep artifacts because they are required for prediction
+# Do NOT ignore:
+# artifacts/

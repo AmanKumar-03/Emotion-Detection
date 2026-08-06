@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+
+  backend:
+    build:
+      context: ./app/backend
+      dockerfile: Dockerfile
+
+    container_name: emotion_backend
+
+    ports:
+      - "8000:8000"
+
+    restart: unless-stopped
+
+    volumes:
+      - ./artifacts:/app/artifacts
+
+  frontend:
+    build:
+      context: ./app/frontend
+      dockerfile: Dockerfile
+
+    container_name: emotion_frontend
+
+    ports:
+      - "8501:8501"
+
+    restart: unless-stopped
+
+    depends_on:
+      - backend
+
+    environment:
+      API_URL: http://backend:8000
