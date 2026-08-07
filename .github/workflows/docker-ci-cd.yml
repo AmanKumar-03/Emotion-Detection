@@ -5,18 +5,32 @@ on:
     branches:
       - main
 
-
 jobs:
-
   build-and-deploy:
 
     runs-on: self-hosted
-
 
     steps:
 
     - name: Checkout code
       uses: actions/checkout@v4
+
+
+    - name: Install DVC
+      run: |
+        pip install dvc
+
+
+    - name: Run DVC Pipeline
+      run: |
+        dvc repro
+
+
+    - name: Copy artifacts for backend Docker build
+      run: |
+        mkdir -p app/backend/artifacts
+        cp artifacts/model.pkl app/backend/artifacts/
+        cp artifacts/vectorizer.pkl app/backend/artifacts/
 
 
     - name: Login Docker Hub
@@ -28,12 +42,16 @@ jobs:
 
     - name: Build Backend Image
       run: |
-        docker build -t amankumar03/emotion-detection-backend:v1.0.2 ./app/backend
+        docker build \
+        -t amankumar03/emotion-detection-backend:v1.0.2 \
+        ./app/backend
 
 
     - name: Build Frontend Image
       run: |
-        docker build -t amankumar03/emotion-detection-frontend:v1.0.2 ./app/frontend
+        docker build \
+        -t amankumar03/emotion-detection-frontend:v1.0.2 \
+        ./app/frontend
 
 
     - name: Push Backend Image
