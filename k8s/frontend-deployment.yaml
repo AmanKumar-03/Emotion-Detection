@@ -2,73 +2,63 @@ apiVersion: apps/v1
 kind: Deployment
 
 metadata:
-
   name: emotion-frontend
-
   namespace: emotion-detection
 
-
 spec:
-
   replicas: 1
 
-
   selector:
-
     matchLabels:
-
       app: emotion-frontend
 
-
   template:
-
     metadata:
-
       labels:
-
         app: emotion-frontend
 
-
     spec:
-
       containers:
-
 
       - name: frontend
 
-
-        image: amankumar03/emotion-detection-frontend:v1.0.1
-
+        image: amankumar03/emotion-detection-frontend:v1.0.3
 
         imagePullPolicy: Always
 
-
         ports:
-
 
         - containerPort: 8501
 
 
         env:
 
-
         - name: API_URL
-
-          value: http://emotion-backend-service:8000
+          value: "http://emotion-backend-service:8000"
 
 
         resources:
 
-
           requests:
-
             cpu: "250m"
-
             memory: "512Mi"
 
-
           limits:
-
             cpu: "500m"
-
             memory: "1Gi"
+
+
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8501
+          initialDelaySeconds: 15
+          periodSeconds: 10
+
+
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8501
+          initialDelaySeconds: 30
+          periodSeconds: 20

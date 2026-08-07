@@ -45,7 +45,7 @@ st.markdown(
 
 DEFAULT_API_URL = os.getenv(
     "API_URL",
-    "http://127.0.0.1:8000"
+    "http://emotion-backend-service:8000"
 )
 PREDICT_URL = f"{DEFAULT_API_URL}/predict"
 
