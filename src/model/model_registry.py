@@ -28,17 +28,6 @@ if not logger.handlers:
     logger.addHandler(console_handler)
     logger.addHandler(file_handler)
 
-# =====================================================
-# CI Protection
-# =====================================================
-
-if os.getenv("CI") == "true":
-
-    logger.info(
-        "CI environment detected. Skipping model registry."
-    )
-
-    exit(0)
 
 # ==========================
 # MLflow + DagsHub Configuration

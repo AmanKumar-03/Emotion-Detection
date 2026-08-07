@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import requests
 from datetime import datetime
@@ -40,15 +41,24 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+# FASTAPI URL CONFIG
+
+DEFAULT_API_URL = os.getenv(
+    "API_URL",
+    "http://emotion-backend-service:8000"
+)
+PREDICT_URL = f"{DEFAULT_API_URL}/predict"
 
 # SIDEBAR
+st.sidebar.title(
+    "😊 Emotion Detection"
+)
 
-st.sidebar.title("😊 Emotion Detection")
 st.sidebar.markdown("---")
 
 api_url = st.sidebar.text_input(
     "FastAPI URL",
-    value="http://127.0.0.1:8000/predict"
+    value=PREDICT_URL
 )
 
 st.sidebar.markdown("---")
@@ -60,11 +70,11 @@ st.sidebar.info(
 2. Click Predict
 3. View emotion
 4. Check confidence
+
 """
 )
 
 # TITLE
-
 st.markdown(
     "<div class='title'>😊 Emotion Detection System</div>",
     unsafe_allow_html=True
@@ -79,6 +89,7 @@ st.markdown(
 if "history" not in st.session_state:
     st.session_state.history = []
 
+
 # INPUT TEXT
 text = st.text_area(
     "Enter your text",
@@ -87,9 +98,15 @@ text = st.text_area(
 )
 
 col1, col2 = st.columns(2)
-predict_btn = col1.button("🚀 Predict",use_container_width=True)
+predict_btn = col1.button(
+    "🚀 Predict",
+    use_container_width=True
+)
 
-clear_btn = col2.button("🗑 Clear",use_container_width=True)
+clear_btn = col2.button(
+    "🗑 Clear",
+    use_container_width=True
+)
 
 if clear_btn:
     st.session_state.history = []
@@ -110,6 +127,7 @@ emotion_icons = {
     "boredom":"😑",
     "empty":"😶",
     "relief":"😌"
+
 }
 
 # PREDICTION
@@ -123,38 +141,43 @@ if predict_btn:
 
             response = requests.post(
                 api_url,
-                json={
-                    "text":text
-                },
+                json={"text": text},
                 timeout=20
             )
 
         if response.status_code != 200:
-            st.error("FastAPI error")
+            st.error("FastAPI Error")
             st.write(response.text)
             st.stop()
+
         result = response.json()
 
-        # Correct FastAPI response parsing
-        prediction = result["prediction"]
-        emotion = prediction["emotion"]
-        confidence = prediction.get("confidence",0)
+        if "prediction" in result:
+            prediction = result["prediction"]
+            emotion = prediction.get("emotion","unknown")
+            confidence = prediction.get("confidence",0)
 
-        # Convert 48.67 -> 0.4867
+        else:
+            # fallback if API returns directly
+            emotion = result.get("emotion","unknown")
+            confidence = result.get("confidence",0)
+
         confidence_value = confidence / 100
         icon = emotion_icons.get(
             emotion.lower(),
             "🙂"
         )
 
-        # Display Result
+        # RESULT DISPLAY
+
         st.markdown("---")
 
         st.markdown(
             "<div class='result-box'>",
             unsafe_allow_html=True
         )
-        c1,c2 = st.columns(2)
+
+        c1, c2 = st.columns(2)
         c1.metric("Predicted Emotion",f"{icon} {emotion.title()}")
         c2.metric("Confidence",f"{confidence:.2f}%")
         st.progress(confidence_value)
@@ -165,42 +188,38 @@ if predict_btn:
         st.success("Prediction completed successfully")
 
         # Save history
-        st.session_state.history.append(
-            {
+        st.session_state.history.append({
                 "time":datetime.now().strftime("%H:%M:%S"),
                 "text":text,
                 "emotion":emotion,
                 "confidence":confidence_value
-            }
-        )
+            })
     except requests.exceptions.ConnectionError:
         st.error("Cannot connect to FastAPI server")
     except Exception as e:
         st.error(str(e))
 
-
 # HISTORY
 if st.session_state.history:
+
     st.markdown("---")
 
     st.subheader("Prediction History")
 
     for item in reversed(st.session_state.history):
-        
         with st.expander(f"{item['time']} | {item['emotion']}"):
 
             st.write("**Input Text**")
-
             st.write(item["text"])
-
             st.write("**Emotion**")
             st.success(item["emotion"].title())
             st.write("**Confidence**")
             st.progress(item["confidence"])
             st.write(f"{item['confidence']*100:.2f}%")
 
-
+# FOOTER
 st.markdown("---")
+
 
 st.caption(
     "Built with ❤️ using Streamlit + FastAPI + Scikit-Learn + MLflow"

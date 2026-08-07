@@ -1,8 +1,6 @@
 name: Emotion Detection CI
 
-
 on:
-
   push:
     branches:
       - master
@@ -10,7 +8,6 @@ on:
   pull_request:
     branches:
       - master
-
 
 
 jobs:
@@ -42,19 +39,13 @@ jobs:
       with:
 
         path: |
-
           .dvc/cache
-
           data
-
           artifacts
-
 
         key: dvc-${{ runner.os }}-${{ hashFiles('dvc.lock') }}
 
-
         restore-keys: |
-
           dvc-${{ runner.os }}-
 
 
@@ -89,6 +80,8 @@ jobs:
 
         pip install -r app/frontend/requirements.txt
 
+        pip install dvc
+
 
 
     # -----------------------------
@@ -122,7 +115,22 @@ jobs:
 
 
     # -----------------------------
-    # Check Pipeline Outputs
+    # Prepare Backend Artifacts
+    # -----------------------------
+
+    - name: Copy Model Artifacts
+      run: |
+
+        mkdir -p app/backend/artifacts
+
+        cp artifacts/model.pkl app/backend/artifacts/
+
+        cp artifacts/vectorizer.pkl app/backend/artifacts/
+
+
+
+    # -----------------------------
+    # Verify Pipeline Outputs
     # -----------------------------
 
     - name: Verify Output Files
@@ -130,12 +138,17 @@ jobs:
 
         echo "Checking artifacts..."
 
-        ls artifacts || true
+        ls -la artifacts
+
+
+        echo "Checking backend artifacts..."
+
+        ls -la app/backend/artifacts
 
 
         echo "Checking data..."
 
-        ls data || true
+        ls -la data
 
 
 
