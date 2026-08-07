@@ -1,0 +1,11 @@
+﻿{
+  "agentId": 21,
+  "agentName": "emotion-runner",
+  "poolId": 1,
+  "poolName": "Default",
+  "serverUrl": "https://pipelinesghubeus24.actions.githubusercontent.com/XNtxKSQxqUOKEtD7FCZ7pGXsBL43rpj5Vz16GhVCC2TqkxoTlw/",
+  "gitHubUrl": "https://github.com/AmanKumar-03/Emotion-Detection",
+  "workFolder": "_work",
+  "useV2Flow": true,
+  "serverUrlV2": "https://broker.actions.githubusercontent.com/"
+}
