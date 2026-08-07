@@ -1,0 +1,12 @@
+﻿{
+  "repositoryName": "AmanKumar-03/Emotion-Detection",
+  "pipelineDirectory": "Emotion-Detection",
+  "workspaceDirectory": "Emotion-Detection\\Emotion-Detection",
+  "repositories": {
+    "AmanKumar-03/Emotion-Detection": {
+      "repositoryPath": "Emotion-Detection\\Emotion-Detection",
+      "lastRunOn": "08/07/2026 16:53:21 +05:30"
+    }
+  },
+  "lastRunOn": "08/07/2026 16:53:21 +05:30"
+}

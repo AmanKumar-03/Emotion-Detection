@@ -12,68 +12,40 @@ jobs:
 
     runs-on: self-hosted
 
+
     steps:
 
-      # Checkout repository
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
 
-      # Docker Hub Login
-      - name: Login Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Login Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
 
 
-      # Build Backend Docker Image
-      - name: Build Backend Image
-        run: |
-          docker build \
-            -t amankumar03/emotion-detection-backend:v1.0.2 \
-            ./app/backend
+    - name: Build Backend Image
+      run: |
+        docker build -t amankumar03/emotion-detection-backend:v1.0.2 ./app/backend
 
 
-      # Build Frontend Docker Image
-      - name: Build Frontend Image
-        run: |
-          docker build \
-            -t amankumar03/emotion-detection-frontend:v1.0.2 \
-            ./app/frontend
+    - name: Build Frontend Image
+      run: |
+        docker build -t amankumar03/emotion-detection-frontend:v1.0.2 ./app/frontend
 
 
-      # Push Backend Image
-      - name: Push Backend Image
-        run: |
-          docker push amankumar03/emotion-detection-backend:v1.0.2
+    - name: Push Backend Image
+      run: |
+        docker push amankumar03/emotion-detection-backend:v1.0.2
 
 
-      # Push Frontend Image
-      - name: Push Frontend Image
-        run: |
-          docker push amankumar03/emotion-detection-frontend:v1.0.2
+    - name: Push Frontend Image
+      run: |
+        docker push amankumar03/emotion-detection-frontend:v1.0.2
 
 
-      # Install kubectl
-      - name: Setup Kubernetes
-        uses: azure/setup-kubectl@v4
-
-
-      # Check files (debug)
-      - name: Check repository files
-        run: |
-          pwd
-          ls
-          ls k8s
-
-
-      # Deploy Kubernetes
-      - name: Deploy Kubernetes
-        run: |
-          echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig
-          export KUBECONFIG=kubeconfig
-
-          kubectl get nodes
-
-          kubectl apply -f k8s/
+    - name: Deploy Kubernetes
+      run: |
+        kubectl apply -f k8s/
