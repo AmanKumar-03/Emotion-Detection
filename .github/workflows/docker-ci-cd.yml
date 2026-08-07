@@ -6,6 +6,7 @@ on:
       - main
 
 jobs:
+
   build-and-deploy:
 
     runs-on: self-hosted
@@ -17,20 +18,30 @@ jobs:
 
 
     - name: Install DVC
+      shell: powershell
       run: |
         pip install dvc
 
 
     - name: Run DVC Pipeline
+      shell: powershell
       run: |
         dvc repro
 
 
-    - name: Copy artifacts for backend Docker build
+    - name: Prepare Backend Artifacts
+      shell: powershell
       run: |
-        mkdir -p app/backend/artifacts
-        cp artifacts/model.pkl app/backend/artifacts/
-        cp artifacts/vectorizer.pkl app/backend/artifacts/
+        New-Item -ItemType Directory -Force -Path app/backend/artifacts
+
+        Copy-Item artifacts/model.pkl app/backend/artifacts/
+        Copy-Item artifacts/vectorizer.pkl app/backend/artifacts/
+
+
+    - name: Verify Backend Files
+      shell: powershell
+      run: |
+        Get-ChildItem app/backend/artifacts
 
 
     - name: Login Docker Hub
@@ -41,29 +52,53 @@ jobs:
 
 
     - name: Build Backend Image
+      shell: powershell
       run: |
-        docker build \
-        -t amankumar03/emotion-detection-backend:v1.0.2 \
+        docker build `
+        -t amankumar03/emotion-detection-backend:v1.0.2 `
         ./app/backend
 
 
     - name: Build Frontend Image
+      shell: powershell
       run: |
-        docker build \
-        -t amankumar03/emotion-detection-frontend:v1.0.2 \
+        docker build `
+        -t amankumar03/emotion-detection-frontend:v1.0.2 `
         ./app/frontend
 
 
     - name: Push Backend Image
+      shell: powershell
       run: |
         docker push amankumar03/emotion-detection-backend:v1.0.2
 
 
     - name: Push Frontend Image
+      shell: powershell
       run: |
         docker push amankumar03/emotion-detection-frontend:v1.0.2
 
 
-    - name: Deploy Kubernetes
+    - name: Update Kubernetes Images
+      shell: powershell
+      run: |
+        kubectl set image deployment/emotion-backend `
+        backend=amankumar03/emotion-detection-backend:v1.0.2 `
+        -n emotion-detection
+
+        kubectl set image deployment/emotion-frontend `
+        frontend=amankumar03/emotion-detection-frontend:v1.0.2 `
+        -n emotion-detection
+
+
+    - name: Deploy Kubernetes Manifests
+      shell: powershell
       run: |
         kubectl apply -f k8s/
+        
+
+    - name: Check Kubernetes Status
+      shell: powershell
+      run: |
+        kubectl get pods -n emotion-detection
+        kubectl get svc -n emotion-detection
